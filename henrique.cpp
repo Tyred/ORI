@@ -40,9 +40,10 @@ int main(int args, char** argv){
 		for(i=0; i<get_delimiters(str_text_data, '\n'); i++){
 			commands[i] = split(str_text_data, '\n', i);
 			if(!a.parse(commands[i])){
-				cout << "Erro detectado, na linha " << i << endl;
+				cout << "Erro detectado, na linha " << i+1 << endl;
 				return 1;
 			}
 		}
+		cout << "Fim dos dados!" << endl;
 	}
 }
