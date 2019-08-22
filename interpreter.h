@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -23,6 +24,17 @@ std::string split(std::string input, const char delim, const int n){
 	return aux;
 }
 
+// INSPIRED BY CPP DOCUMENTATION 
+// http://www.cplusplus.com/reference/istream/istream/read/
+// Gets file size
+int get_file_size(ifstream* file){
+	file->seekg(0, file->end);
+	int size = file->tellg();
+	file->seekg(0, file->beg);
+
+	return size;
+}
+
 // Gets amount of fields in a string
 int get_delimiters(string s, const char delim){
 	int amount = 1;
@@ -38,7 +50,7 @@ int get_delimiters(string s, const char delim){
 
 class interpreter{
 public:
-	void parse(string input){
+	bool parse(string input){
 		int fields = get_delimiters(input, ' ');
 		string command;
 		string table;
@@ -51,9 +63,11 @@ public:
 		if(fields == 1){
 			if(input == "LT" || input == "EB"){
 				cout << "Comando " << input << " interpretado" << endl;
+				return true;
 			}
 			else{
 				cout << "Comando Inexistente" << endl;
+				return false;
 			}
 		}
 		// Look for 2 fields commands
@@ -61,9 +75,11 @@ public:
 			command = split(input, ' ', 0);
 			if(command == "RT" || command == "AT" || command == "AR" || command == "RR"){
 				cout << "Comando " << command << " interpretado" << endl;
+				return true;
 			}
 			else{
 				cout << "Comando Inexistente" << endl;
+				return false;
 			}
 		}
 		// Look for 3 fields commands
@@ -71,9 +87,11 @@ public:
 			command = split(input, ' ', 0);
 			if(command == "CT" || command == "IR" || command == "RI" || command == "GI"){
 				cout << "Comando " << command << " interpretado" << endl;
+				return true;
 			}
 			else{
 				cout << "Comando Inexistente" << endl;
+				return false;
 			}
 		}
 		// Look for 4 fields commands
@@ -82,17 +100,21 @@ public:
 			type = split(input, ' ', 1);
 			if(command == "BR" && (type == "N" || type == "U")){
 				cout << "Comando " << command << " " << type << " interpretado" << endl;
+				return true;
 			}
 			else if(command == "CI" && (type == "A" || type == "H")){
 				cout << "Comando " << command << " " << type << " interpretado" << endl;				
+				return true;
 			}
 
 			else{
 				cout << "Comando Inexistente" << endl;
+				return false;
 			}
 		}
 		else{
 			cout << "Número de campos inválido" << endl;
+			return false;
 		}
 	}
 };
