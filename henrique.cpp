@@ -10,7 +10,7 @@ int main(){
 	string input;
 	interpreter a;
 
-	while(input != "q"){
+	while(input != "EB"){
 		cout << "Digite:" << endl;
 		getline(std::cin, input);
 

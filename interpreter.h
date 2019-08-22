@@ -49,8 +49,8 @@ public:
 
 		// Look for 1 field commands
 		if(fields == 1){
-			if(input == "LT"){
-				cout << "Listando o nome de todas as tabelas da base" << endl;
+			if(input == "LT" || input == "EB"){
+				cout << "Comando " << input << " interpretado" << endl;
 			}
 			else{
 				cout << "Comando Inexistente" << endl;
@@ -69,7 +69,7 @@ public:
 		// Look for 3 fields commands
 		else if(fields == 3){
 			command = split(input, ' ', 0);
-			if(command == "CT" || command == "IR"){
+			if(command == "CT" || command == "IR" || command == "RI" || command == "GI"){
 				cout << "Comando " << command << " interpretado" << endl;
 			}
 			else{
@@ -83,6 +83,10 @@ public:
 			if(command == "BR" && (type == "N" || type == "U")){
 				cout << "Comando " << command << " " << type << " interpretado" << endl;
 			}
+			else if(command == "CI" && (type == "A" || type == "H")){
+				cout << "Comando " << command << " " << type << " interpretado" << endl;				
+			}
+
 			else{
 				cout << "Comando Inexistente" << endl;
 			}
