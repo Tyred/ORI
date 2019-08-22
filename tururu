@@ -1,0 +1,81 @@
+#include <iostream>
+
+using namespace std;
+
+string toUpperString(string input){
+    input[0] = toupper(input[0]);
+    input[1] = toupper(input[1]);
+
+    return input;
+}
+
+void findoutCMD(string input){
+
+    input = toUpperString(input);
+
+    if(input == "CT"){
+        cout <<  "Arquivo criado!" << endl;
+    }
+
+    if(input == "RT"){
+        cout << "Arquivo apagado e Metadados removidos!" << endl;
+    }
+
+    if(input == "CI"){
+        cout << "Indice criado!" << endl;
+    }
+
+    if(input == "RI"){
+        cout << "Indice removido!" << endl;
+    }
+
+    if(input == "GI")
+    {
+        cout << "Indice gerado!" << endl;
+    }
+
+    if(input == "EB")
+    {
+        cout << "Interpretacao encerrada" << endl;
+    }
+
+    if(input== "AT")
+    {
+        cout << "Resumos apresentados!" << endl;
+    }
+
+    if(input == "LT")
+    {
+        cout << "Nomes listados!" << endl;
+    }
+
+    if(input == "IR")
+    {
+        cout << "Registro inserido!" << endl;
+    }
+
+    if(input == "BR")
+    {
+        cout << "Busca realizada!" << endl;
+    }
+
+    if(input == "AR")
+    {
+        cout << "Valores apresentados!" << endl;
+    }
+
+    if(input == "RR")
+    {
+        cout << "Registros removidos!" << endl;
+    }
+}
+int main(){
+
+    string comando;
+
+    cin >> comando;
+
+    findoutCMD(comando);
+
+    return 0;
+}
