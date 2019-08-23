@@ -96,6 +96,7 @@ public:
 		string reg;
 		string type;
 		string search;
+		string key;
 
 		// Look for 1 field commands
 		if(fields == 1){
@@ -106,6 +107,8 @@ public:
 			else if(input == "LT"){
 				cout << "Metadados disponíveis:" << endl;
 				read_metadata(); 
+				cout << endl;
+				return true;
 			}
 			else{
 				cout << "Comando Inexistente" << endl;
@@ -115,7 +118,27 @@ public:
 		// Look for 2 fields commands
 		else if(fields == 2){
 			command = split(input, ' ', 0);
-			if(command == "RT" || command == "AT" || command == "AR" || command == "RR"){
+			table = split(input, ' ', 1);
+			if(command == "RT" ){
+				cout << "Linha relativa a tabela " << table << ' ' << "apagada dos metadados" << endl;					
+				cout << "Comando " << command << " interpretado" << endl;
+				return true;
+			}
+			else if(command == "AT"){
+				cout << "Metadados da tabela " << table << ':' << endl;
+				// TO DO
+				cout << "Comando " << command << " interpretado" << endl;
+				return true;
+			}
+			else if(command == "AR"){
+				cout << "Valores dos registros da ultima busca da tabela " << table << ':' << endl;
+				// TO DO
+				cout << "Comando " << command << " interpretado" << endl;
+				return true;
+			}
+			else if(command == "RR"){
+				cout << "Valores dos registros da ultima busca removidos da tabela " << table << ':' << endl;
+				// TO DO
 				cout << "Comando " << command << " interpretado" << endl;
 				return true;
 			}
@@ -127,7 +150,27 @@ public:
 		// Look for 3 fields commands
 		else if(fields == 3){
 			command = split(input, ' ', 0);
-			if(command == "RI" || command == "GI"){
+			if (command == "IR"){
+				table = split(input, ' ', 1);
+				camps = split(input, ' ', 2);
+				for(int i=0; i<get_delimiters(camps, ';'); i++){
+					reg = split(camps, ';', i);
+					cout << "Inserido o registro " << reg << ' ' << "na tabela " << table << endl;
+				}
+				cout << "Comando " << command << " interpretado" << endl;
+				return true;
+			}
+			else if (command == "GI"){
+				table = split(input, ' ', 1);
+				key = split(input, ' ', 2);
+				cout << "Gerado o indice da chave " << key << ' ' << "da tabela " << table << endl;
+				cout << "Comando " << command << " interpretado" << endl;
+				return true;
+			}
+			else if(command == "RI"){
+				table = split(input, ' ', 1);
+				key = split(input, ' ', 2);
+				cout << "Removido o indice da chave " << key << ' ' << "da tabela " << table << endl;
 				cout << "Comando " << command << " interpretado" << endl;
 				return true;
 			}
@@ -145,10 +188,11 @@ public:
 					}
 				}
 				ofstream metadata;
-				cout << "Criada tabela com nome: " << table << endl;
+                cout << "Criada tabela com nome: " << table << endl;
 				metadata.open("metadados.txt", std::ofstream::app);
 				metadata << table << "\t" << camps << endl;
 				metadata.close();
+				cout << "Comando CT interpretado" << endl;
 				return true;
 				
 
@@ -162,15 +206,28 @@ public:
 		else if(fields == 4){
 			command = split(input, ' ', 0);
 			type = split(input, ' ', 1);
-			if(command == "BR" && (type == "N" || type == "U")){
+			table = split(input, ' ', 2) ;
+			search = split(input, ' ', 3);
+			if(command == "BR" && type == "N"){						
+				cout << "Buscando todos " << search << ' ' << "na tabela " << table << endl;
 				cout << "Comando " << command << " " << type << " interpretado" << endl;
 				return true;
 			}
-			else if(command == "CI" && (type == "A" || type == "H")){
+			else if(command == "BR" && type == "U"){						
+				cout << "Buscando o primeiro " << search << ' ' << "na tabela " << table << endl;
+				cout << "Comando " << command << " " << type << " interpretado" << endl;
+				return true;
+			}
+			else if(command == "CI" &&type == "A"){         // type == "H")
+				cout << "Indice para a tabela estruturado como árvore " << table << ' ' << "criado, com chave de busca " << search << endl;;									
 				cout << "Comando " << command << " " << type << " interpretado" << endl;				
 				return true;
 			}
-
+			else if(command == "CI" &&type == "H"){         // type == "H")
+				cout << "Indice para a tabela estruturado como hashing" << table << ' ' << "criado, com chave de busca " << search << endl;;									
+				cout << "Comando " << command << " " << type << " interpretado" << endl;				
+				return true;
+			}
 			else{
 				cout << "Comando Inexistente" << endl;
 				return false;
