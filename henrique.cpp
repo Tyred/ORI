@@ -29,6 +29,7 @@ int main(int args, char** argv){
 	}
 	else{ // Modo Arquivo
 		// Abre e lê arquivo
+		
 		ifstream file;
 		file.open(argv[1]);
 		text_data = new char[get_file_size(&file)];

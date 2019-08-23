@@ -47,6 +47,26 @@ int get_delimiters(string s, const char delim){
 	return amount;
 }
 
+// Gets filename and returns array of string representing file lines
+string* read_lines(char* filename){
+	string* out;
+	ifstream file;
+	char* text_data;
+	string str_text_data;
+
+	file.open(filename);
+	text_data = new char[get_file_size(&file)];
+	file.read(text_data, get_file_size(&file));
+	str_text_data = string(text_data);
+
+	// Separa comando por comando
+	out = new string[get_delimiters(str_text_data, '\n')];
+	for(int i=0; i<get_delimiters(str_text_data, '\n'); i++)
+		out[i] = split(str_text_data, '\n', i);	
+	return out;
+
+}
+
 
 class interpreter{
 public:
@@ -85,9 +105,31 @@ public:
 		// Look for 3 fields commands
 		else if(fields == 3){
 			command = split(input, ' ', 0);
-			if(command == "CT" || command == "IR" || command == "RI" || command == "GI"){
+			if(command == "IR" || command == "RI" || command == "GI"){
 				cout << "Comando " << command << " interpretado" << endl;
 				return true;
+			}
+			// CT commands parsing
+			else if(command == "CT"){
+				table = split(input, ' ', 1);
+				camps = split(input, ' ', 2);
+				for(int i=0; i<get_delimiters(camps, ';'); i++){
+					type = split(split(camps, ';', i), ':', 0);
+					cout << type << endl;
+					cout << split(split(camps, ';', i), ':', 1) << endl;
+					if((type != "INT" && type != "FLT" && type != "STR" && type != "BIN") || split(split(camps, ';', i), ':', 1) == ""){
+						cout << "Campo inválido" << endl;
+						return false;
+					}
+				}
+				ofstream metadata;
+				metadata.open("metadados.txt", std::ofstream::app);
+				metadata << table << "\t" << camps << endl;
+				metadata.close();
+				cout << "Comando CT interpretado" << endl;
+				return true;
+				
+
 			}
 			else{
 				cout << "Comando Inexistente" << endl;
