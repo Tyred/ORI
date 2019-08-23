@@ -5,6 +5,10 @@
 using namespace std;
 
 // Breaks the string into pieces and get nth separation
+
+void ignoreSpaces(string &str){
+    str.erase(0, str.find_first_not_of(" \n\t\r\f\v"));
+}
 std::string split(std::string input, const char delim, const int n){
 	int separation = 0;
 	std::string aux = "";

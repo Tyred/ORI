@@ -20,10 +20,11 @@ int main(int args, char** argv){
 	
 	// Modo Texto
 	if(argv[1] == NULL){
-		while(input != "EB"){
-			cout << "Digite:" << endl;
-			getline(std::cin, input);
-
+		while(input != "EB" && getline(std::cin, input)){
+			//cout << "Digite:" << endl;
+			//getline(std::cin, input);
+			ignoreSpaces(input);
+			if(input.empty()) continue; // Ignora comando vazio
 			a.parse(input);
 		}
 	}
