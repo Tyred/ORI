@@ -135,23 +135,20 @@ public:
 			else if(command == "CT"){
 				table = split(input, ' ', 1);
 				camps = split(input, ' ', 2);
-                cout << "Criada tabela com nome: " << table << endl;
     
-				for(int i=0; i<get_delimiters(camps, ';'); i++){
+				for(int i=0; i<get_delimiters(camps, ';')-1; i++){
 					type = split(split(camps, ';', i), ':', 0);
-					cout << type << endl;
                     
-					cout << split(split(camps, ';', i), ':', 1) << endl;
 					if((type != "INT" && type != "FLT" && type != "STR" && type != "BIN") || split(split(camps, ';', i), ':', 1) == ""){
 						cout << "Campo inválido" << endl;
 						return false;
 					}
 				}
 				ofstream metadata;
+				cout << "Criada tabela com nome: " << table << endl;
 				metadata.open("metadados.txt", std::ofstream::app);
 				metadata << table << "\t" << camps << endl;
 				metadata.close();
-				cout << "Comando CT interpretado" << endl;
 				return true;
 				
 
