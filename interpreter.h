@@ -23,6 +23,18 @@ void ignoreSpaces(string &str){
     str.erase(0, str.find_first_not_of(" \n\t\r\f\v"));
 }
 
+// Gets amount of fields in a string
+int get_delimiters(string s, const char delim){
+	int amount = 1;
+
+	for(int i=0;i<s.length();i++){
+		if(s[i] == delim){
+			amount++;
+		}
+	}
+	return amount;
+}
+
 string toUpperString(string &input){
     ignoreSpaces(input);
     input[0] = toupper(input[0]);
@@ -40,6 +52,11 @@ ifstream myReadFile;
 			cout<<output;
 		}
 	}
+}
+
+bool file_exists(string filename){
+    ifstream infile(filename);
+    return infile.good();
 }
 
 // Breaks the string into pieces and get nth separation
@@ -62,6 +79,57 @@ std::string split(std::string input, const char delim, const int n){
 	return aux;
 }
 
+bool create_table(string name, string fields){
+	string available_tables;
+
+	// Checks if file exists
+	if(!file_exists("TABLES.txt")){
+		ofstream index;
+		index.open("TABLES.txt", ios_base::out);
+		index.close();
+	}
+
+	// Opens file for reading
+	ifstream index;
+	index.open("TABLES.txt", ios_base::in);
+	while (!index.eof()){
+		index >> available_tables;
+	}
+
+	index.close();
+
+	// Checks line by line
+	for(int i=0;i<get_delimiters(available_tables, '\n'); i++){
+		if(split(available_tables, '\n', i) == name){
+			cout << "A tabela " << name << " já existe" << endl;
+			return false;
+		}
+	}
+
+	// Writes name to file if it doesn't exists
+	ofstream ondex;
+	ondex.open("TABLES.txt", ios_base::app);
+	ondex << name << '\n';
+	ondex.close();
+		
+	// Creates Table file
+	ofstream table;
+	table.open("Table_" + name + ".txt");
+	string header;
+
+	// Writes table header
+	for(int i=0;i<get_delimiters(fields, ';'); i++){
+		header += split(split(fields, ';', i), ':', 1);
+		if(i < get_delimiters(fields, ';')-1)
+			header += '\t';
+	}
+	header += '\n';
+	table << header;
+	table.close();
+	return true;
+}
+
+
 // INSPIRED BY CPP DOCUMENTATION 
 // http://www.cplusplus.com/reference/istream/istream/read/
 // Gets file size
@@ -71,18 +139,6 @@ int get_file_size(ifstream* file){
 	file->seekg(0, file->beg);
 
 	return size;
-}
-
-// Gets amount of fields in a string
-int get_delimiters(string s, const char delim){
-	int amount = 1;
-
-	for(int i=0;i<s.length();i++){
-		if(s[i] == delim){
-			amount++;
-		}
-	}
-	return amount;
 }
 
 
@@ -187,6 +243,10 @@ public:
 						return false;
 					}
 				}
+				if(!create_table(table, camps)){
+					return false;
+				}
+
 				ofstream metadata;
                 cout << "Criada tabela com nome: " << table << endl;
 				metadata.open("metadados.txt", std::ofstream::app);
@@ -194,9 +254,8 @@ public:
 				metadata.close();
 				cout << "Comando CT interpretado" << endl;
 				return true;
+				}
 				
-
-			}
 			else{
 				cout << "Comando Inexistente" << endl;
 				return false;
