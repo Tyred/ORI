@@ -1,8 +1,28 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-*.txt
+int main()
+{
+    char nome[100], auxnome[100];
+    int i = 0, j=0, tam;
 
-*.exe
+    gets(nome);
 
-Makefile
+    tam = strlen(nome);
 
-teste.cpp
+    while(nome[i]!= '\0')
+    {
+        if(nome[i] != ' ')
+        {
+           auxnome[j] = nome[i];
+           j++;
+        }
+
+        i++;
+
+    }
+        printf("%s", auxnome);
+
+}
+
