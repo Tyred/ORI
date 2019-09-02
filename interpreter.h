@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <stdio.h>
 
 using namespace std;
 
@@ -23,12 +24,45 @@ void ignoreSpaces(string &str){
     str.erase(0, str.find_first_not_of(" \n\t\r\f\v"));
 }
 
+string readfile(string filename){
+	ifstream infile;
+	string data, line;
+	infile.open(filename);
+
+	for(line; getline(infile, line); ) {
+		data += line + "\n";
+	}
+
+	infile.close();
+	return data;
+}
+
+// Breaks the string into pieces and get nth separation
+std::string split(std::string input, const char delim, const int n){
+	int separation = 0;
+	std::string aux = "";
+
+	for(int i=0;i<input.length();i++){
+		if(input[i] != delim && separation == n){
+			aux += input[i];
+
+		}
+		else if(input[i] == delim){
+			separation++;
+			if(separation>n){
+				return aux;
+			}
+		}
+	}
+	return aux;
+}
+
 // Gets amount of fields in a string
 int get_delimiters(string s, const char delim){
 	int amount = 1;
 
-	for(int i=0;i<s.length();i++){
-		if(s[i] == delim){
+	for(char const &c : s){
+		if(c == delim){
 			amount++;
 		}
 	}
@@ -54,62 +88,72 @@ ifstream myReadFile;
 	}
 }
 
+// Read file and return array of lines
+string* readlines(string name, int &size){
+	string* lines;	
+	string all_data;
+	ifstream infile;
+	infile.open(name);
+	while(!infile.eof()){
+		infile >> all_data;
+	}
+	infile.close();
+
+	lines = new string[get_delimiters(all_data, '\n')];
+	for(int i=0;i<get_delimiters(all_data, '\n'); i++){
+		lines[i] = split(all_data, '\n', i);
+	}
+	size = get_delimiters(all_data, '\n');
+	return lines;
+}
+
 bool file_exists(string filename){
     ifstream infile(filename);
     return infile.good();
 }
 
-// Breaks the string into pieces and get nth separation
-std::string split(std::string input, const char delim, const int n){
-	int separation = 0;
-	std::string aux = "";
-
-	for(int i=0;i<input.length();i++){
-		if(input[i] != delim && separation == n){
-			aux += input[i];
-
-		}
-		else if(input[i] == delim){
-			separation++;
-			if(separation>n){
-				return aux;
-			}
-		}
-	}
-	return aux;
-}
-
+// CT Command operation
 bool create_table(string name, string fields){
 	string available_tables;
+	string better_fields;
+	string line;
 
 	// Checks if file exists
-	if(!file_exists("TABLES.txt")){
+	if(!file_exists("metadados.txt")){
 		ofstream index;
-		index.open("TABLES.txt", ios_base::out);
+		index.open("metadados.txt", ios_base::out);
 		index.close();
+	}
+
+	// Fixes fields separator
+	for(char const &c: fields){
+		if(c != ';')
+			better_fields += c;
+		else
+			better_fields += '\t';
 	}
 
 	// Opens file for reading
 	ifstream index;
-	index.open("TABLES.txt", ios_base::in);
-	while (!index.eof()){
-		index >> available_tables;
+	index.open("metadados.txt");
+	for(line; getline(index, line); ) {
+		available_tables += line + "\n";
 	}
 
 	index.close();
 
 	// Checks line by line
 	for(int i=0;i<get_delimiters(available_tables, '\n'); i++){
-		if(split(available_tables, '\n', i) == name){
-			cout << "A tabela " << name << " já existe" << endl;
+		if(split(split(available_tables, '\n', i), '\t', 0) == name){
+			cout << "A tabela ja existe" << endl;
 			return false;
 		}
 	}
 
 	// Writes name to file if it doesn't exists
 	ofstream ondex;
-	ondex.open("TABLES.txt", ios_base::app);
-	ondex << name << '\n';
+	ondex.open("metadados.txt", ios_base::app);
+	ondex << name << '\t' << better_fields << '\n';
 	ondex.close();
 		
 	// Creates Table file
@@ -129,6 +173,51 @@ bool create_table(string name, string fields){
 	return true;
 }
 
+// RT Command operation
+bool remove_table(string name){
+	string all_data;
+	string available_tables;
+	bool found = false;
+	string extracted;
+
+	// Checks if file exists
+	if(!file_exists("metadados.txt")){
+		ofstream index;
+		index.open("metadados.txt", ios_base::out);
+		index.close();
+	}
+
+	// Opens file for reading
+	available_tables = readfile("metadados.txt");
+
+	// Checks line by line
+	for(int i=0;i<get_delimiters(available_tables, '\n'); i++){
+		extracted = split(split(available_tables, '\n', i), '\t', 0);
+		if(extracted == name){
+			// If found in tables index
+			found = true;
+		}
+		else if(extracted == ""){
+			continue;
+		}
+		else{
+			all_data += split(available_tables, '\n', i) + '\n';
+		}
+	}
+	if(found){
+		cout << "Tabela " << name << " removida da base" << endl;
+		ofstream metadados;
+		metadados.open("metadados.txt", ios_base::out);
+		metadados << all_data;
+		metadados.close();
+
+		string filename = "Table_" + name + ".txt";
+		const char* char_name = filename.c_str();
+		remove(char_name);
+		return true;
+	}
+	return false;	
+}
 
 // INSPIRED BY CPP DOCUMENTATION 
 // http://www.cplusplus.com/reference/istream/istream/read/
@@ -176,9 +265,12 @@ public:
 			command = split(input, ' ', 0);
 			table = split(input, ' ', 1);
 			if(command == "RT" ){
-				cout << "Linha relativa a tabela " << table << ' ' << "apagada dos metadados" << endl;					
-				cout << "Comando " << command << " interpretado" << endl;
-				return true;
+				if(remove_table(table))
+					return true;
+				else{
+					cout << "A tabela nao existe\n";
+					return false;
+				}
 			}
 			else if(command == "AT"){
 				cout << "Metadados da tabela " << table << ':' << endl;
@@ -235,7 +327,7 @@ public:
 				table = split(input, ' ', 1);
 				camps = split(input, ' ', 2);
     
-				for(int i=0; i<get_delimiters(camps, ';')-1; i++){
+				for(int i=0; i<get_delimiters(camps, ';'); i++){
 					type = split(split(camps, ';', i), ':', 0);
                     
 					if((type != "INT" && type != "FLT" && type != "STR" && type != "BIN") || split(split(camps, ';', i), ':', 1) == ""){
@@ -243,16 +335,12 @@ public:
 						return false;
 					}
 				}
+
 				if(!create_table(table, camps)){
 					return false;
 				}
 
-				ofstream metadata;
                 cout << "Criada tabela com nome: " << table << endl;
-				metadata.open("metadados.txt", std::ofstream::app);
-				metadata << table << "\t" << camps << endl;
-				metadata.close();
-				cout << "Comando CT interpretado" << endl;
 				return true;
 				}
 				
