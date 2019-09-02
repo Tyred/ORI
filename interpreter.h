@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <stdio.h>
+#include <regex>
 
 using namespace std;
 
@@ -69,6 +70,22 @@ int get_delimiters(string s, const char delim){
 	return amount;
 }
 
+// Splits and returns string*
+string* split(std::string input, const char delim){
+	int j=0;
+	string* aux = new string[get_delimiters(input, delim)];
+
+	for(int i=0;i<input.length();i++){
+		if(input[i] != delim){
+			aux[j] += input[i];
+		}
+		else if(input[i] == delim){
+			j++;
+		}
+	}
+	return aux;
+}
+
 string toUpperString(string &input){
     ignoreSpaces(input);
     input[0] = toupper(input[0]);
@@ -107,9 +124,13 @@ string* readlines(string name, int &size){
 	return lines;
 }
 
+// Inspired by http://www.cplusplus.com/forum/general/219004/
+// Checks whether a file exists or not
 bool file_exists(string filename){
-    ifstream infile(filename);
-    return infile.good();
+	ifstream f;
+	f.open(filename);
+	if(f) return true;
+	else return false;
 }
 
 // CT Command operation
@@ -174,7 +195,7 @@ bool create_table(string name, string fields){
 }
 
 // AT Command operation
-bool show_metadata(string name){
+bool show_metadata(string name, bool verbose=true){
 	string data = readfile("metadados.txt");
 	string extracted;
 	bool found = false;
@@ -183,16 +204,124 @@ bool show_metadata(string name){
 	for(int i=0;i<get_delimiters(data, '\n'); i++){
 		extracted = split(split(data, '\n', i), '\t', 0);
 		if(extracted == name){
-			cout << split(data, '\n', i) << endl;
+			if(verbose)
+				cout << split(data, '\n', i) << endl;
 			found = true;
+			break;
 		}
 	}	
 	if(!found){
-		cout << "Registro nao encontrado" << endl;
+		if(verbose)
+			cout << "Registro nao encontrado" << endl;
 		return false;
 	}
 	return true;
 }
+
+// Gets table name metadata
+string get_metadata(string name){
+	string data = readfile("metadados.txt");
+	string extracted;
+	bool found = false;
+
+	// Checks line by line
+	for(int i=0;i<get_delimiters(data, '\n'); i++){
+		extracted = split(split(data, '\n', i), '\t', 0);
+		if(extracted == name){
+			return split(data, '\n', i);
+		}
+	}	
+	return "";
+}
+
+// IR Command validation
+bool validate_registry(string name, string fields){
+	int n_fields = get_delimiters(fields, ';');
+	string meta;
+
+	if(show_metadata(name, false))
+		meta = get_metadata(name);
+	else{
+		cout << "Nome de tabela inexistente" << endl;
+		return false;
+	}
+
+	if(n_fields != get_delimiters(meta, '\t')-1){
+		cout << "Numero de campos do registro invalido" << endl;
+		return false;
+	}
+
+	string* data = split(meta, '\t'); 
+	string* types = new string[get_delimiters(meta, '\t')-1];
+	string* input = split(fields, ';');
+
+	// Get field types
+	for(int i=0;i<n_fields;i++){
+		types[i] = split(data[i+1], ':', 0);
+	}
+
+	// Check type matching
+	for(int i=0;i<n_fields;i++){
+		if(types[i] == "STR"){
+			regex r("[a-zA-Z]+");
+			if(!regex_match(input[i], r)){
+				cout << "Erro: o campo " << i+1 << " deve ser STR" << endl;
+				return false;
+			}
+		}
+		if(types[i] == "INT"){
+			regex r("[0-9]+");
+			if(!regex_match(input[i], r)){
+				cout << "Erro: o campo " << i+1 << " deve ser INT" << endl;
+				return false;
+			}
+		}
+		if(types[i] == "FLT"){
+			regex r("[0-9]+,[0-9]+");
+			if(!regex_match(input[i], r)){
+				cout << "Erro: o campo " << i+1 << " deve ser FLT" << endl;
+				return false;
+			}
+		}
+
+		if(types[i] == "BIN"){
+			cout << "BIN\n";
+			if(!file_exists(input[i])){
+				cout << "Erro: o arquivo binario no campo " << i+1 << " deve existir" << endl;
+				return false;
+			}
+		}
+
+	}
+
+	return true;
+}
+
+// IR Command Operation
+bool add_registry(string name, string fields){
+	string better_fields;
+
+	if(!validate_registry(name, fields)){
+		return false;
+	}
+
+	// Fixes fields separator
+	for(char const &c: fields){
+		if(c != ';')
+			better_fields += c;
+		else
+			better_fields += '\t';
+	}
+
+	// Writes registry to table
+	ofstream ondex;
+	ondex.open("Table_" + name + ".txt", ios_base::app);
+	ondex << better_fields << '\n';
+	ondex.close();	
+	cout << "Registro adicionado com sucesso" << endl;
+	return true;
+}
+
 
 // RT Command operation
 bool remove_table(string name){
@@ -316,15 +445,14 @@ public:
 		// Look for 3 fields commands
 		else if(fields == 3){
 			command = split(input, ' ', 0);
-			if (command == "IR"){
+
+			if(command == "IR"){
 				table = split(input, ' ', 1);
 				camps = split(input, ' ', 2);
-				for(int i=0; i<get_delimiters(camps, ';'); i++){
-					reg = split(camps, ';', i);
-					cout << "Inserido o registro " << reg << ' ' << "na tabela " << table << endl;
-				}
-				cout << "Comando " << command << " interpretado" << endl;
-				return true;
+
+				if(add_registry(table, camps))
+					return true;
+				return false;
 			}
 			else if (command == "GI"){
 				table = split(input, ' ', 1);
