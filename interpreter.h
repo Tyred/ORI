@@ -173,6 +173,27 @@ bool create_table(string name, string fields){
 	return true;
 }
 
+// AT Command operation
+bool show_metadata(string name){
+	string data = readfile("metadados.txt");
+	string extracted;
+	bool found = false;
+
+	// Checks line by line
+	for(int i=0;i<get_delimiters(data, '\n'); i++){
+		extracted = split(split(data, '\n', i), '\t', 0);
+		if(extracted == name){
+			cout << split(data, '\n', i) << endl;
+			found = true;
+		}
+	}	
+	if(!found){
+		cout << "Registro nao encontrado" << endl;
+		return false;
+	}
+	return true;
+}
+
 // RT Command operation
 bool remove_table(string name){
 	string all_data;
@@ -273,10 +294,9 @@ public:
 				}
 			}
 			else if(command == "AT"){
-				cout << "Metadados da tabela " << table << ':' << endl;
-				// TO DO
-				cout << "Comando " << command << " interpretado" << endl;
-				return true;
+				if(show_metadata(table))
+					return true;
+				return false;
 			}
 			else if(command == "AR"){
 				cout << "Valores dos registros da ultima busca da tabela " << table << ':' << endl;
