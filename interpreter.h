@@ -380,6 +380,72 @@ int get_file_size(ifstream* file){
 	return size;
 }
 
+// Gets field position of a table
+int get_correct_field(string table, string field){
+	string metadata = readfile("metadados.txt");
+	string* metaline = split(metadata, '\n');
+
+	for(int i=0;i<get_delimiters(metadata, '\n');i++){
+		if(split(metaline[i], '\t', 0) == table){
+			for(int j=1; j<get_delimiters(metaline[i], '\t');j++){
+				if(split(split(metaline[i], '\t', j), ':', 1) == split(field, ':', 0)){
+					return j-1;
+				}
+			}
+		}
+	}
+	return -1;
+}
+
+// BR U Command operation
+bool singular_search(string table, string key){
+	int pos = get_correct_field(table, key);
+
+	if(pos < 0){
+		cout << "Campo nao encontrado" << endl;
+		return false;
+	}
+
+	string read_data = readfile("Table_" + table + ".txt");
+	string* data = split(read_data, '\n');
+
+	for(int i=0; i<get_delimiters(read_data, '\n'); i++){
+		string key_value = split(key, ':', 1);
+		if(split(data[i], '\t', pos) == key_value){
+			cout << data[i] << endl;
+			return true;
+		}
+	}
+	cout << "Registro nao encontrado" << endl;
+	return false;
+}
+
+// BR N Command operation
+bool deep_search(string table, string key){
+	bool found = false;
+	int pos = get_correct_field(table, key);
+
+	if(pos < 0){
+		cout << "Campo não encontrado" << endl;
+		return false;
+	}
+
+	string read_data = readfile("Table_" + table + ".txt");
+	string* data = split(read_data, '\n');
+
+	for(int i=0; i<get_delimiters(read_data, '\n'); i++){
+		string key_value = split(key, ':', 1);
+		if(split(data[i], '\t', pos) == key_value){
+			cout << data[i] << endl;
+			found = true;
+		}
+	}
+	if(found)
+		return true;
+
+	cout << "Registro nao encontrado" << endl;
+	return false;
+}
 
 class interpreter{
 public:
@@ -477,7 +543,7 @@ public:
 					type = split(split(camps, ';', i), ':', 0);
                     
 					if((type != "INT" && type != "FLT" && type != "STR" && type != "BIN") || split(split(camps, ';', i), ':', 1) == ""){
-						cout << "Campo inválido" << endl;
+						cout << "Campo invalido" << endl;
 						return false;
 					}
 				}
@@ -502,14 +568,12 @@ public:
 			table = split(input, ' ', 2) ;
 			search = split(input, ' ', 3);
 			if(command == "BR" && type == "N"){						
-				cout << "Buscando todos " << search << ' ' << "na tabela " << table << endl;
-				cout << "Comando " << command << " " << type << " interpretado" << endl;
-				return true;
+				if(deep_search(table, search)) return true;
+				else return false;
 			}
 			else if(command == "BR" && type == "U"){						
-				cout << "Buscando o primeiro " << search << ' ' << "na tabela " << table << endl;
-				cout << "Comando " << command << " " << type << " interpretado" << endl;
-				return true;
+				if(singular_search(table, search)) return true;
+				else return false;
 			}
 			else if(command == "CI" &&type == "A"){         // type == "H")
 				cout << "Indice para a tabela estruturado como árvore " << table << ' ' << "criado, com chave de busca " << search << endl;;									
