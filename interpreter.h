@@ -271,9 +271,7 @@ public:
 				return true;
 			}
 			else if(input == "LT"){
-				cout << "Metadados disponíveis:" << endl;
-				read_metadata(); 
-				cout << endl;
+				cout << readfile("metadados.txt") << endl;
 				return true;
 			}
 			else{
