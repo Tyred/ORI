@@ -230,8 +230,9 @@ bool show_metadata(string name, bool verbose=true){
 	for(int i=0;i<get_delimiters(data, '\n'); i++){
 		extracted = split(split(data, '\n', i), '\t', 0);
 		if(extracted == name){
-			if(verbose)
+			if(verbose){
 				cout << split(data, '\n', i) << endl;
+			}
 			found = true;
 			break;
 		}
@@ -289,30 +290,29 @@ bool validate_registry(string name, string fields){
 	// Check type matching
 	for(int i=0;i<n_fields;i++){
 		if(types[i] == "STR"){
-			regex r("[a-zA-Z]+");
-			if(!regex_match(input[i], r)){
+			regex r("\\D+");
+			if(!regex_match(split(input[i], ':', 1), r)){
 				cout << "Erro: o campo " << i+1 << " deve ser STR" << endl;
 				return false;
 			}
 		}
 		if(types[i] == "INT"){
-			regex r("[0-9]+");
-			if(!regex_match(input[i], r)){
+			regex r("\\d+");
+			if(!regex_match(split(input[i], ':', 1), r)){
 				cout << "Erro: o campo " << i+1 << " deve ser INT" << endl;
 				return false;
 			}
 		}
 		if(types[i] == "FLT"){
-			regex r("[0-9]+,[0-9]+");
-			if(!regex_match(input[i], r)){
+			regex r("\\d+,\\d+");
+			if(!regex_match(split(input[i], ':', 1), r)){
 				cout << "Erro: o campo " << i+1 << " deve ser FLT" << endl;
 				return false;
 			}
 		}
 
 		if(types[i] == "BIN"){
-			cout << "BIN\n";
-			if(!file_exists(input[i])){
+			if(!file_exists(split(input[i], ':', 1))){
 				cout << "Erro: o arquivo binario no campo " << i+1 << " deve existir" << endl;
 				return false;
 			}
@@ -326,6 +326,7 @@ bool validate_registry(string name, string fields){
 // IR Command Operation
 bool add_registry(string name, string fields){
 	string better_fields;
+	string even_better_fields;
 
 	if(!validate_registry(name, fields)){
 		return false;
@@ -338,11 +339,15 @@ bool add_registry(string name, string fields){
 		else
 			better_fields += '\t';
 	}
+	for(int i=0;i<get_delimiters(better_fields, '\t');i++){
+		even_better_fields += split(split(better_fields, '\t', i), ':', 1) + '\t';
+	}
+	even_better_fields = get_substring(even_better_fields, 0, even_better_fields.length()-1);
 
 	// Writes registry to table
 	ofstream ondex;
 	ondex.open("Table_" + name + ".txt", ios_base::app);
-	ondex << better_fields << '\n';
+	ondex << even_better_fields << '\n';
 	ondex.close();	
 	cout << "Registro adicionado com sucesso" << endl;
 	return true;
