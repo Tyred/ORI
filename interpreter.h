@@ -20,6 +20,32 @@ using namespace std;
 	cout << str << endl;
 }*/   // Ignorar por enquanto 
 
+string get_substring(string text, int begin, int end){
+	string output;
+
+	for(int i=begin;i<end;i++)
+		output += text[i];
+
+	return output;
+}
+
+string prepare_string(string input){
+	// Erase n* spaces
+	regex r("\\s\\s*");
+	input = regex_replace(input, r, " ");
+
+	// Fix initial and last separators
+	if(input[0] == ' '){
+		input = get_substring(input, 1, input.length());
+	}
+
+	if(input[input.length()-1] == ';'){
+		input = get_substring(input, 0, input.length()-1);
+	}
+
+	return input;
+}
+
 // Ignore initial spaces
 void ignoreSpaces(string &str){
     str.erase(0, str.find_first_not_of(" \n\t\r\f\v"));

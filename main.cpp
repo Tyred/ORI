@@ -22,7 +22,8 @@ int main(int args, char** argv){
 		while(input != "EB" && getline(std::cin, input)){
 			toUpperString(input);
 			if(input.empty()) continue; // Ignora comando vazio
-			//erasespaces(input);
+			input = prepare_string(input);
+			cout << input << endl;
 			if(!a.parse(input)) break;
 		}
 	}
