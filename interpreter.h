@@ -280,28 +280,28 @@ bool validate_registry(string name, string fields){
 	for(int i=0;i<n_fields;i++){
 		if(types[i] == "STR"){
 			regex r("\\D+");
-			if(!regex_match(split(input[i], ':', 1), r)){
+			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser STR" << endl;
 				return false;
 			}
 		}
 		if(types[i] == "INT"){
 			regex r("\\d+");
-			if(!regex_match(split(input[i], ':', 1), r)){
+			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser INT" << endl;
 				return false;
 			}
 		}
 		if(types[i] == "FLT"){
 			regex r("\\d+,\\d+");
-			if(!regex_match(split(input[i], ':', 1), r)){
+			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser FLT" << endl;
 				return false;
 			}
 		}
 
 		if(types[i] == "BIN"){
-			if(!file_exists(split(input[i], ':', 1))){
+			if(!file_exists(input[i])){
 				cout << "Erro: o arquivo binario no campo " << i+1 << " deve existir" << endl;
 				return false;
 			}
@@ -328,15 +328,15 @@ bool add_registry(string name, string fields){
 		else
 			better_fields += '\t';
 	}
-	for(int i=0;i<get_delimiters(better_fields, '\t');i++){
-		even_better_fields += split(split(better_fields, '\t', i), ':', 1) + '\t';
-	}
-	even_better_fields = get_substring(even_better_fields, 0, even_better_fields.length()-1);
+	//for(int i=0;i<get_delimiters(better_fields, '\t');i++){
+//		even_better_fields += split(split(better_fields, '\t', i), ':', 1) + '\t';
+//	}
+//	even_better_fields = get_substring(even_better_fields, 0, even_better_fields.length()-1);
 
 	// Writes registry to table
 	ofstream ondex;
 	ondex.open("Table_" + name + ".txt", ios_base::app);
-	ondex << even_better_fields << '\n';
+	ondex << better_fields << '\n';
 	ondex.close();	
 	cout << "Registro adicionado com sucesso" << endl;
 	return true;
