@@ -119,17 +119,6 @@ string toUpperString(string &input){
 
     return input; 
 }
-void read_metadata(){
-ifstream myReadFile;
-	myReadFile.open("metadados.txt");
-	string output;
-	if (myReadFile.is_open()) {
-		while (!myReadFile.eof()) {
-			myReadFile >> output;
-			cout<<output;
-		}
-	}
-}
 
 // Read file and return array of lines
 string* readlines(string name, int &size){
