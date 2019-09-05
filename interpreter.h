@@ -251,20 +251,21 @@ string get_metadata(string name){
 }
 
 // IR Command validation
-bool validate_registry(string name, string fields){
+string validate_registry(string name, string fields){
 	int n_fields = get_delimiters(fields, ';');
 	string meta;
+	string output;
 
 	if(show_metadata(name, false))
 		meta = get_metadata(name);
 	else{
 		cout << "Nome de tabela inexistente" << endl;
-		return false;
+		return "";
 	}
 
 	if(n_fields != get_delimiters(meta, '\t')-1){
 		cout << "Numero de campos do registro invalido" << endl;
-		return false;
+		return "";
 	}
 
 	string* data = split(meta, '\t'); 
@@ -282,42 +283,48 @@ bool validate_registry(string name, string fields){
 			regex r("\\D+");
 			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser STR" << endl;
-				return false;
+				return "";
 			}
+			output += input[i] + ';';
 		}
 		if(types[i] == "INT"){
 			regex r("\\d+");
 			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser INT" << endl;
-				return false;
+				return "";
+			output += input[i] + ';';
 			}
 		}
 		if(types[i] == "FLT"){
 			regex r("\\d+,\\d+");
 			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser FLT" << endl;
-				return false;
+				return "";
+			output += input[i] + ';';
 			}
 		}
 
 		if(types[i] == "BIN"){
 			if(!file_exists(input[i])){
 				cout << "Erro: o arquivo binario no campo " << i+1 << " deve existir" << endl;
-				return false;
+				return "";
+			cout << readfile(input[i]) << endl;
+			output += readfile(input[i]) + ';';
 			}
 		}
 
 	}
 
-	return true;
+	output = get_substring(output, 0, output.length()-1);
+	return output;
 }
 
 // IR Command Operation
 bool add_registry(string name, string fields){
 	string better_fields;
-	string even_better_fields;
 
-	if(!validate_registry(name, fields)){
+	fields = validate_registry(name, fields);
+	if(fields == ""){
 		return false;
 	}
 
@@ -328,10 +335,6 @@ bool add_registry(string name, string fields){
 		else
 			better_fields += '\t';
 	}
-	//for(int i=0;i<get_delimiters(better_fields, '\t');i++){
-//		even_better_fields += split(split(better_fields, '\t', i), ':', 1) + '\t';
-//	}
-//	even_better_fields = get_substring(even_better_fields, 0, even_better_fields.length()-1);
 
 	// Writes registry to table
 	ofstream ondex;
