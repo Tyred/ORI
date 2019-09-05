@@ -6,20 +6,6 @@
 
 using namespace std;
 
-
-// Delete spaces
-
-/*void erasespaces(string &str){
-	int i = 0;
-	while(i <= str.size()-1 && str[i] != ':'){
-		if(str[i] == ' '){
-			str.erase(i, str.find_first_not_of(' '));
-		}
-	i++;
-	}
-	cout << str << endl;
-}*/   // Ignorar por enquanto 
-
 string get_substring(string text, int begin, int end){
 	string output;
 
