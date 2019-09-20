@@ -1,3 +1,5 @@
+#include <QCoreApplication>
+
 #include <iostream>
 #include <string>
 #include <istream>
