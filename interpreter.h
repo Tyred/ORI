@@ -3,136 +3,11 @@
 #include <fstream>
 #include <stdio.h>
 #include <regex>
+#include "helper_functions.h"
 
 using namespace std;
 
-string get_substring(string text, int begin, int end){
-	string output;
 
-	for(int i=begin;i<end;i++)
-		output += text[i];
-
-	return output;
-}
-
-string prepare_string(string input){
-	// Erase n* spaces
-	regex r("\\s\\s*");
-	input = regex_replace(input, r, " ");
-
-	// Fix initial and last separators
-	if(input[0] == ' '){
-		input = get_substring(input, 1, input.length());
-	}
-
-	if(input[input.length()-1] == ';'){
-		input = get_substring(input, 0, input.length()-1);
-	}
-
-	return input;
-}
-
-// Ignore initial spaces
-void ignoreSpaces(string &str){
-    str.erase(0, str.find_first_not_of(" \n\t\r\f\v"));
-}
-
-string readfile(string filename){
-	ifstream infile;
-	string data, line;
-	infile.open(filename);
-
-	for(line; getline(infile, line); ) {
-		data += line + "\n";
-	}
-
-	infile.close();
-	return data;
-}
-
-// Breaks the string into pieces and get nth separation
-std::string split(std::string input, const char delim, const int n){
-	int separation = 0;
-	std::string aux = "";
-
-	for(int i=0;i<input.length();i++){
-		if(input[i] != delim && separation == n){
-			aux += input[i];
-
-		}
-		else if(input[i] == delim){
-			separation++;
-			if(separation>n){
-				return aux;
-			}
-		}
-	}
-	return aux;
-}
-
-// Gets amount of fields in a string
-int get_delimiters(string s, const char delim){
-	int amount = 1;
-
-	for(char const &c : s){
-		if(c == delim){
-			amount++;
-		}
-	}
-	return amount;
-}
-
-// Splits and returns string*
-string* split(std::string input, const char delim){
-	int j=0;
-	string* aux = new string[get_delimiters(input, delim)];
-
-	for(int i=0;i<input.length();i++){
-		if(input[i] != delim){
-			aux[j] += input[i];
-		}
-		else if(input[i] == delim){
-			j++;
-		}
-	}
-	return aux;
-}
-
-string toUpperString(string &input){
-    ignoreSpaces(input);
-    input[0] = toupper(input[0]);
-    input[1] = toupper(input[1]);
-
-    return input; 
-}
-
-// Read file and return array of lines
-string* readlines(string name, int &size){
-	string* lines;	
-	string all_data;
-	ifstream infile;
-	infile.open(name);
-	while(!infile.eof()){
-		infile >> all_data;
-	}
-	infile.close();
-
-	lines = new string[get_delimiters(all_data, '\n')];
-	for(int i=0;i<get_delimiters(all_data, '\n'); i++){
-		lines[i] = split(all_data, '\n', i);
-	}
-	size = get_delimiters(all_data, '\n');
-	return lines;
-}
-
-// Inspired by http://www.cplusplus.com/forum/general/219004/
-// Checks whether a file exists or not
-bool file_exists(string filename){
-	ifstream f;
-	f.open(filename);
-	if(f) return true;
-	else return false;
-}
 
 // CT Command operation
 bool create_table(string name, string fields){
@@ -147,7 +22,7 @@ bool create_table(string name, string fields){
 		index.close();
 	}
 
-	// Fixes fields separator
+	// Replaces separator ; by tab
 	for(char const &c: fields){
 		if(c != ';')
 			better_fields += c;
@@ -242,6 +117,7 @@ string validate_registry(string name, string fields){
 	string meta;
 	string output;
 
+	// Gets fields in metadata file
 	if(show_metadata(name, false))
 		meta = get_metadata(name);
 	else{
@@ -249,6 +125,7 @@ string validate_registry(string name, string fields){
 		return "";
 	}
 
+	// Checks if number of input has correct number of fields
 	if(n_fields != get_delimiters(meta, '\t')-1){
 		cout << "Numero de campos do registro invalido" << endl;
 		return "";
@@ -273,33 +150,37 @@ string validate_registry(string name, string fields){
 			}
 			output += input[i] + ';';
 		}
-		if(types[i] == "INT"){
+		else if(types[i] == "INT"){
 			regex r("\\d+");
 			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser INT" << endl;
 				return "";
-			output += input[i] + ';';
 			}
+			output += input[i] + ';';
+
 		}
-		if(types[i] == "FLT"){
+		else if(types[i] == "FLT"){
 			regex r("\\d+,\\d+");
 			if(!regex_match(input[i], r)){
 				cout << "Erro: o campo " << i+1 << " deve ser FLT" << endl;
 				return "";
-			output += input[i] + ';';
 			}
+			output += input[i] + ';';
+
 		}
 
-		if(types[i] == "BIN"){
+		else if(types[i] == "BIN"){
 			if(!file_exists(input[i])){
 				cout << "Erro: o arquivo binario no campo " << i+1 << " deve existir" << endl;
 				return "";
+			}
 			cout << readfile(input[i]) << endl;
 			output += readfile(input[i]) + ';';
-			}
 		}
 
 	}
+
+	cout << output << endl;
 
 	output = get_substring(output, 0, output.length()-1);
 	return output;
@@ -321,6 +202,7 @@ bool add_registry(string name, string fields){
 		else
 			better_fields += '\t';
 	}
+	cout << better_fields << endl;
 
 	// Writes registry to table
 	ofstream ondex;
