@@ -7,11 +7,13 @@
 #include <stdio.h>
 #include <regex>
 #include "helper_functions.h"
+#include "registersearch.h"
+#include "registerdeleted.h"
 
 using namespace std;
 
 // CT Command operation
-bool create_table(string name, string fields){
+bool create_table(const Table &table, string fields){
     string available_tables;
     string better_fields;
     string line;
@@ -42,7 +44,7 @@ bool create_table(string name, string fields){
 
     // Checks line by line
     for(int i=0;i<get_delimiters(available_tables, '\n'); i++){
-        if(split(split(available_tables, '\n', i), '\t', 0) == name){
+        if(split(split(available_tables, '\n', i), '\t', 0) == table){
             cout << "A tabela ja existe" << endl;
             return false;
         }
@@ -51,12 +53,12 @@ bool create_table(string name, string fields){
     // Writes name to file if it doesn't exists
     ofstream ondex;
     ondex.open("metadados.txt", ios_base::app);
-    ondex << name << '\t' << better_fields << '\n';
+    ondex << table << '\t' << better_fields << '\n';
     ondex.close();
 
     // Creates Table file
-    ofstream table;
-    table.open("Table_" + name + ".txt");
+    ofstream aux;
+    aux.open("Table_" + table + ".txt");
     string header;
 
     // Writes table header
@@ -66,13 +68,13 @@ bool create_table(string name, string fields){
             header += '\t';
     }
     header += '\n';
-    table << header;
-    table.close();
+    aux << header;
+    aux.close();
     return true;
 }
 
 // AT Command operation
-bool show_metadata(string name, bool verbose=true){
+bool show_metadata(const Table &table, bool verbose=true){
     string data = readfile("metadados.txt");
     string extracted;
     bool found = false;
@@ -80,7 +82,7 @@ bool show_metadata(string name, bool verbose=true){
     // Checks line by line
     for(int i=0;i<get_delimiters(data, '\n'); i++){
         extracted = split(split(data, '\n', i), '\t', 0);
-        if(extracted == name){
+        if(extracted == table){
             if(verbose){
                 cout << split(data, '\n', i) << endl;
             }
@@ -97,7 +99,7 @@ bool show_metadata(string name, bool verbose=true){
 }
 
 // Gets table name metadata
-string get_metadata(string name){
+string get_metadata(const Table &table){
     string data = readfile("metadados.txt");
     string extracted;
     bool found = false;
@@ -105,7 +107,7 @@ string get_metadata(string name){
     // Checks line by line
     for(int i=0;i<get_delimiters(data, '\n'); i++){
         extracted = split(split(data, '\n', i), '\t', 0);
-        if(extracted == name){
+        if(extracted == table){
             return split(data, '\n', i);
         }
     }
@@ -113,14 +115,14 @@ string get_metadata(string name){
 }
 
 // IR Command validation
-string validate_registry(string name, string fields){
+string validate_registry(const Table &table, string fields){
     int n_fields = get_delimiters(fields, ';');
     string meta;
     string output;
 
     // Gets fields in metadata file
-    if(show_metadata(name, false))
-        meta = get_metadata(name);
+    if(show_metadata(table, false))
+        meta = get_metadata(table);
     else{
         cout << "Nome de tabela inexistente" << endl;
         return "";
@@ -188,10 +190,10 @@ string validate_registry(string name, string fields){
 }
 
 // IR Command Operation
-bool add_registry(string name, string fields){
+bool add_registry(const Table &table, string fields){
     string better_fields;
 
-    fields = validate_registry(name, fields);
+    fields = validate_registry(table, fields);
     if(fields == ""){
         return false;
     }
@@ -207,7 +209,7 @@ bool add_registry(string name, string fields){
 
     // Writes registry to table
     ofstream ondex;
-    ondex.open("Table_" + name + ".txt", ios_base::app);
+    ondex.open("Table_" + table + ".txt", ios_base::app);
     ondex << better_fields << '\n';
     ondex.close();
     cout << "Registro adicionado com sucesso" << endl;
@@ -215,7 +217,7 @@ bool add_registry(string name, string fields){
 }
 
 // RT Command operation
-bool remove_table(string name){
+bool remove_table(const Table &table){
     string all_data;
     string available_tables;
     bool found = false;
@@ -234,7 +236,7 @@ bool remove_table(string name){
     // Checks line by line
     for(int i=0;i<get_delimiters(available_tables, '\n'); i++){
         extracted = split(split(available_tables, '\n', i), '\t', 0);
-        if(extracted == name){
+        if(extracted == table){
             // If found in tables index
             found = true;
         }
@@ -246,13 +248,13 @@ bool remove_table(string name){
         }
     }
     if(found){
-        cout << "Tabela " << name << " removida da base" << endl;
+        cout << "Tabela " << table << " removida da base" << endl;
         ofstream metadados;
         metadados.open("metadados.txt", ios_base::out);
         metadados << all_data;
         metadados.close();
 
-        string filename = "Table_" + name + ".txt";
+        string filename = "Table_" + table + ".txt";
         const char* char_name = filename.c_str();
         remove(char_name);
         return true;
@@ -272,7 +274,7 @@ int get_file_size(ifstream* file){
 }
 
 // Gets field position of a table
-int get_correct_field(string table, string field){
+int get_correct_field(const Table &table, string field){
     string metadata = readfile("metadados.txt");
     string* metaline = split(metadata, '\n');
 
@@ -289,7 +291,7 @@ int get_correct_field(string table, string field){
 }
 
 // BR U Command operation
-bool singular_search(string table, string key){
+bool singular_search(const Table &table, string key, const vector<RegisterDeleted> &deletados){
     int pos = get_correct_field(table, key);
 
     if(pos < 0){
@@ -312,7 +314,7 @@ bool singular_search(string table, string key){
 }
 
 // BR N Command operation
-bool deep_search(string table, string key){
+bool deep_search(const Table &table, string key, const vector<RegisterDeleted> &deletados){
     bool found = false;
     int pos = get_correct_field(table, key);
 
@@ -339,29 +341,33 @@ bool deep_search(string table, string key){
 }
 
 // RR remove register operation
-bool remove_register(string table){
+bool remove_register(const Table &table, vector<RegisterDeleted> &deletados, vector<RegisterSearch> &resultados){
     return false;
 }
 
 // include list searchs
-bool list_search_table(string table){
+bool list_search_table(const Table &tabela, vector<RegisterSearch> &resultados){
     return false;
 }
 
-class interpreter{
+class interpreter {
 public:
     bool parse(string input){
         int fields = get_delimiters(input, ' ');
         string command;
-        string table;
         string camps;
         string reg;
         string type;
         string search;
         string key;
+        Table table;
+        vector<RegisterSearch> listaResultados;
+        vector<RegisterDeleted> listaRemovidos;
+        vector<Table> listaTabelas;
 
         // Look for 1 field commands
         if(fields == 1){
+            //Comando para sair
             if(input == "EB"){
                 cout << "Comando " << input << " interpretado" << endl;
                 return true;
@@ -399,7 +405,9 @@ public:
                 return true;
             }
             else if(command == "RR"){
-                if(remove_register(table)){
+
+                Table aux(table);
+                if(remove_register(aux, listaRemovidos, listaResultados)){
                     cout << "Valores dos registros da ultima busca removidos da tabela " << table << ':' << endl;
                 } else{
                     cout << "Não foi possível remover o registro da tabela " << table << ':' << endl;
@@ -473,11 +481,11 @@ public:
             table = split(input, ' ', 2) ;
             search = split(input, ' ', 3);
             if(command == "BR" && type == "N"){
-                if(deep_search(table, search)) return true;
+                if(deep_search(table, search, listaRemovidos)) return true;
                 else return false;
             }
             else if(command == "BR" && type == "U"){
-                if(singular_search(table, search)) return true;
+                if(singular_search(table, search, listaRemovidos)) return true;
                 else return false;
             }
             else if(command == "CI" &&type == "A"){         // type == "H")

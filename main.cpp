@@ -16,7 +16,6 @@ int main(int args, char** argv){
     string* commands;
     int i;
 
-
     // Modo Texto
     if(argv[1] == NULL){
         while(input != "EB" && getline(std::cin, input)){
