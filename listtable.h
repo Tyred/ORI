@@ -13,6 +13,7 @@ public:
     ListTable();
 
     bool getTable(string name, Table &tabela) const;
+    bool addTable(Table table);
     bool addTable(string nameTable);
     bool removeTable(string name);
 

@@ -9,6 +9,7 @@
 #include "helper_functions.h"
 #include "registersearch.h"
 #include "registerdeleted.h"
+#include "listtable.h"
 
 using namespace std;
 
@@ -350,6 +351,15 @@ bool list_search_table(const Table &tabela, vector<RegisterSearch> &resultados){
     return false;
 }
 
+bool verifyType(string type){
+    if(type == "INT" || type == "FLT" || type == "STR" || type == "BIN"){
+        return true;
+    }
+
+    cout << "Campo com formato invalido" << endl;
+    return false;
+}
+
 class interpreter {
 public:
     bool parse(string input){
@@ -360,10 +370,11 @@ public:
         string type;
         string search;
         string key;
+        string tableName;
         Table table;
         vector<RegisterSearch> listaResultados;
         vector<RegisterDeleted> listaRemovidos;
-        vector<Table> listaTabelas;
+        ListTable listaTabelas;
 
         // Look for 1 field commands
         if(fields == 1){
@@ -384,7 +395,9 @@ public:
         // Look for 2 fields commands
         else if(fields == 2){
             command = split(input, ' ', 0);
-            table = split(input, ' ', 1);
+            tableName = split(input, ' ', 1);
+            table.setNameTable(tableName);
+
             if(command == "RT" ){
                 if(remove_table(table))
                     return true;
@@ -406,8 +419,7 @@ public:
             }
             else if(command == "RR"){
 
-                Table aux(table);
-                if(remove_register(aux, listaRemovidos, listaResultados)){
+                if(remove_register(table, listaRemovidos, listaResultados)){
                     cout << "Valores dos registros da ultima busca removidos da tabela " << table << ':' << endl;
                 } else{
                     cout << "Não foi possível remover o registro da tabela " << table << ':' << endl;
@@ -426,7 +438,8 @@ public:
             command = split(input, ' ', 0);
 
             if(command == "IR"){
-                table = split(input, ' ', 1);
+                tableName = split(input, ' ', 1);
+                table.setNameTable(tableName);
                 camps = split(input, ' ', 2);
 
                 if(add_registry(table, camps))
@@ -434,14 +447,16 @@ public:
                 return false;
             }
             else if (command == "GI"){
-                table = split(input, ' ', 1);
+                tableName = split(input, ' ', 1);
+                table.setNameTable(tableName);
                 key = split(input, ' ', 2);
                 cout << "Gerado o indice da chave " << key << ' ' << "da tabela " << table << endl;
                 cout << "Comando " << command << " interpretado" << endl;
                 return true;
             }
             else if(command == "RI"){
-                table = split(input, ' ', 1);
+                tableName = split(input, ' ', 1);
+                table.setNameTable(tableName);
                 key = split(input, ' ', 2);
                 cout << "Removido o indice da chave " << key << ' ' << "da tabela " << table << endl;
                 cout << "Comando " << command << " interpretado" << endl;
@@ -449,7 +464,9 @@ public:
             }
             // CT commands parsing
             else if(command == "CT"){
-                table = split(input, ' ', 1);
+
+                tableName = split(input, ' ', 1);
+                table.setNameTable(tableName);
                 camps = split(input, ' ', 2);
 
                 for(int i=0; i<get_delimiters(camps, ';'); i++){
@@ -466,8 +483,9 @@ public:
                 }
 
                 cout << "Criada tabela com nome: " << table << endl;
+                listaTabelas.addTable(table);
                 return true;
-                }
+            }
 
             else{
                 cout << "Comando Inexistente" << endl;

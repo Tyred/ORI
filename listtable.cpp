@@ -2,6 +2,16 @@
 
 ListTable::ListTable(){}
 
+bool ListTable::addTable(Table table){
+
+    if(this->existTable(table.getNameTable())){
+        return false;
+    }
+
+    this->tabelas.push_back(table);
+    return false;
+}
+
 bool ListTable::addTable(string nameTable){
     if(this->existTable(nameTable)){
         return false;
