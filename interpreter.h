@@ -115,6 +115,18 @@ string get_metadata(const Table &table){
     return "";
 }
 
+// Binary file data transformation
+// Turns \n into <ENDL&> and ; into <CSVAL> comma-separated-value
+string transform_binary(string data){
+    regex r("\\\n");
+    regex r2(";");
+    string replacement = "<ENDL&>";
+    string replacement2 = "<CSVAL>";
+
+
+    return regex_replace(regex_replace(data, r, replacement), r2, replacement2);   
+}
+
 // IR Command validation
 string validate_registry(const Table &table, string fields){
     int n_fields = get_delimiters(fields, ';');
@@ -178,8 +190,7 @@ string validate_registry(const Table &table, string fields){
                 cout << "Erro: o arquivo binario no campo " << i+1 << " deve existir" << endl;
                 return "";
             }
-            cout << readfile(input[i]) << endl;
-            output += readfile(input[i]) + ';';
+            output += transform_binary(readfile(input[i])) + ';';
         }
 
     }
