@@ -496,7 +496,8 @@ public:
         else if(fields == 4){
             command = split(input, ' ', 0);
             type = split(input, ' ', 1);
-            table = split(input, ' ', 2) ;
+            tableName = split(input, ' ', 2) ;
+            table.setNameTable(tableName);
             search = split(input, ' ', 3);
             if(command == "BR" && type == "N"){
                 if(deep_search(table, search, listaRemovidos)) return true;
