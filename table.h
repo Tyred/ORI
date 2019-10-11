@@ -32,7 +32,7 @@ public:
 
     bool existField(string nameField) const;
     string& operator+(string& txt);
-
+    Table& operator+=(const vector<Field>& campos);
 
 };
 string operator+(const string& txt, const Table& table);

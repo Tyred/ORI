@@ -352,6 +352,47 @@ bool deep_search(const Table &table, string key, const vector<RegisterDeleted> &
     return false;
 }
 
+vector<Field> splitField(string command){
+    int inicio = 0;
+    string nameField = "";
+    string type = "";
+
+    vector<Field> listaCampos;
+
+    int i = -1;
+    for(char atual: command){
+        i++;
+
+        //se for espaço eu removo da string
+        if(atual == ' '){
+            atual = '_';
+        }
+
+        //se for : siginifca que estamos terminando a primeira parte do bloco
+        if(atual == ':'){
+            type = command.substr(inicio, i - inicio);
+            inicio = i+1;
+        }
+
+        //se for : siginifca que estamos terminando a segunda parte do bloco
+        if(atual == ';' || command.length() <= (i+1)){
+            nameField = command.substr(inicio, i - inicio);
+            inicio = i+1;
+        }
+
+        if(nameField != "" && type != ""){
+            Field campo(nameField, type);
+            listaCampos.push_back(campo);
+
+            nameField.clear();
+            type.clear();
+            continue;
+        }
+    }
+
+    return listaCampos;
+}
+
 // RR remove register operation
 bool remove_register(const Table &table, vector<RegisterDeleted> &deletados, vector<RegisterSearch> &resultados){
     return false;
@@ -362,7 +403,7 @@ bool list_search_table(const Table &tabela, vector<RegisterSearch> &resultados){
     return false;
 }
 
-bool verifyType(string type){
+bool typeValid(string type){
     if(type == "INT" || type == "FLT" || type == "STR" || type == "BIN"){
         return true;
     }
@@ -479,12 +520,11 @@ public:
                 tableName = split(input, ' ', 1);
                 table.setNameTable(tableName);
                 camps = split(input, ' ', 2);
+                table += splitField(camps);//adiciono os campos nas respectivas variáveis
 
-                for(int i=0; i<get_delimiters(camps, ';'); i++){
-                    type = split(split(camps, ';', i), ':', 0);
-
-                    if((type != "INT" && type != "FLT" && type != "STR" && type != "BIN") || split(split(camps, ';', i), ':', 1) == ""){
-                        cout << "Campo invalido" << endl;
+                for(Field aux:table.getField()){
+                    if(!typeValid(aux.getType())){ //se for um formato inadequado
+                        cout << "Formato de campo inválido! " <<'\n';
                         return false;
                     }
                 }

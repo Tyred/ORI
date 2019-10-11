@@ -21,7 +21,7 @@ string operator+(const string& txt, const Field& field){
 
     string aux = "";
     if(field.getName() != "" && field.getType() != ""){
-        aux = txt + field.getType() + ":"+field.getType();
+        aux = txt + field.getType() + ":"+field.getName();
     }
 
     return aux;
@@ -30,7 +30,7 @@ string operator+(const string& txt, const Field& field){
 string& Field::operator+(string &txt){
 
     if(this->getName() != "" && this->getType() != ""){
-        txt = this->getType() + ":"+this->getType()+txt;
+        txt = this->getType() + ":"+this->getName() + txt;
     }
 
     return txt;
