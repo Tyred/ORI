@@ -131,6 +131,16 @@ string& Table::operator+(string &txt){
     return txt;
 }
 
+Table& Table::operator+=(const vector<Field>& campos){
+
+    for(Field aux : campos){
+        this->addField(aux.getName(), aux.getType());
+    }
+
+    return *this;
+}
+
+
 string operator+(const string& txt, const Table& table){
     return txt + table.getNameTable();
 }
