@@ -17,6 +17,7 @@ public:
     string getType() const;
     void setName(string newName);
     string& operator+(string& txt);
+    bool operator==(const Field& field)const;
 };
 
 string operator+(const string& txt, const Field& field);

@@ -48,11 +48,24 @@ ostream& operator<<(ostream& os, const Field& field){
 ostream& operator<<(ostream& os, const vector<Field>& field){
     string concat = "";
 
-    for(Field aux: field){
-        if(aux.getName() != "" && aux.getType() != ""){
-            os << concat + aux + '\t';
+    int i = 0;
+
+    for(int i = 0; i < field.size();i++){
+
+        if(field.at(i).getName() != "" && field.at(i).getType() != ""){ //se não tiver campo vazio
+            concat += field.at(i).getType() + ":"+ field.at(i).getName();
+
+            if(i+1 < field.size()){ //se não for o último
+                concat += '\t';
+            }
         }
+
     }
 
+    os << concat;
     return os;
+}
+
+bool Field::operator==(const Field& field)const{
+    return this->name == field.name;
 }

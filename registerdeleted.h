@@ -19,7 +19,11 @@ public:
     bool removeInfo(const Information &info);
     void setTable(Table novo);
     bool addInfo(const Information &info);
-
 };
 
+vector<RegisterDeleted>& operator-(vector<RegisterDeleted>&registros, const vector<Table>& tabelas);
+vector<RegisterDeleted>& operator-(vector<RegisterDeleted>&registros, const Table& tabela);
+
+vector<RegisterDeleted>& operator+(vector<RegisterDeleted>&registros, const vector<Table>& tabelas);
+vector<RegisterDeleted>& operator+(vector<RegisterDeleted>&registros, const Table& tabela);
 #endif // REGISTERDELETED_H

@@ -131,15 +131,20 @@ string& Table::operator+(string &txt){
     return txt;
 }
 
+Table& Table::operator+=(const Field& campos){
+
+    this->addField(campos.getName(), campos.getType());
+    return *this;
+}
+
 Table& Table::operator+=(const vector<Field>& campos){
 
     for(Field aux : campos){
-        this->addField(aux.getName(), aux.getType());
+        *this += aux;
     }
 
     return *this;
 }
-
 
 string operator+(const string& txt, const Table& table){
     return txt + table.getNameTable();
@@ -153,3 +158,28 @@ bool operator==(const Table& table, const string& txt){
     return txt == table.getNameTable();
 }
 
+Table& Table::operator-=(const Field& campo){
+    int i = 0;
+    for(Field aux:this->campos){
+
+        if(aux.getName() == campo.getName()){
+            this->campos.erase(this->campos.begin()+i);
+        }
+
+    }
+
+    return *this;
+}
+
+Table& Table::operator-=(const vector<Field>& campos){
+
+    for(Field aux : campos){
+        *this -= aux;
+    }
+
+    return *this;
+}
+
+bool Table::operator==(const Table& tabela)const{
+    return this->name_table == tabela.name_table;
+}

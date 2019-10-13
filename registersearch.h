@@ -24,4 +24,10 @@ class RegisterSearch {
 
 };
 
+vector<RegisterSearch>& operator-(vector<RegisterSearch>&registros, const vector<Table>& tabelas);
+vector<RegisterSearch>& operator-(vector<RegisterSearch>&registros, const Table& tabela);
+
+vector<RegisterSearch>& operator+(vector<RegisterSearch>&registros, const vector<Table>& tabelas);
+vector<RegisterSearch>& operator+(vector<RegisterSearch>&registros, const Table& tabela);
+
 #endif // SEARCH_H

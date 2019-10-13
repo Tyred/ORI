@@ -38,6 +38,10 @@ bool ListTable::addField(string nameTable, string nameField, string type){
     return false;
 }
 
+bool ListTable::removeTable(const Table &tabela){
+    return this->removeTable(tabela.getNameTable());
+}
+
 bool ListTable::removeTable(string name){
     int i = 0;
     //verifico se já existe esse campo
@@ -62,6 +66,10 @@ bool ListTable::getTable(string name, Table &tabela) const{
     }
 
     return false;
+}
+
+vector<Table> ListTable::getTable() const{
+    return this->tabelas;
 }
 
 bool ListTable::existTable(string nameTable) const{

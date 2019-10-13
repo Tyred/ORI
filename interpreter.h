@@ -13,11 +13,54 @@
 
 using namespace std;
 
-// CT Command operation
-bool create_table(const Table &table, string fields){
-    string available_tables;
-    string better_fields;
+vector<Field> splitField(string command){
+    int inicio = 0;
+    string nameField = "";
+    string type = "";
+
+    vector<Field> listaCampos;
+
+    int i = 0;
+    for(char atual: command){
+
+        //se for espaço eu removo da string
+        if(atual == ' '){
+            atual = '_';
+        }
+
+        //se for : siginifca que estamos terminando a primeira parte do bloco
+        if(atual == ':'){
+            type = command.substr(inicio, i - inicio);
+            inicio = i+1;
+        }
+
+        //se for : siginifca que estamos terminando a segunda parte do bloco
+        if(atual == ';'){
+            nameField = command.substr(inicio, i - inicio);
+            inicio = i+1;
+        }
+
+        if((i+1) == command.length()){
+            nameField = command.substr(inicio, command.size());
+        }
+        i++;
+
+        if(nameField != "" && type != ""){
+            Field campo(toUpperAllString(nameField), toUpperAllString(type));
+            listaCampos.push_back(campo);
+
+            nameField.clear();
+            type.clear();
+            continue;
+        }
+    }
+
+    return listaCampos;
+}
+
+void loadListTable(ListTable &listaTabelas){
     string line;
+    string available_tables;
 
     // Checks if file exists
     if(!file_exists("metadados.txt")){
@@ -26,55 +69,79 @@ bool create_table(const Table &table, string fields){
         index.close();
     }
 
-    // Replaces separator ; by tab
-    for(char const &c: fields){
-        if(c != ';')
-            better_fields += c;
-        else
-            better_fields += '\t';
-    }
-
     // Opens file for reading
     ifstream index;
     index.open("metadados.txt");
-    for(line; getline(index, line); ) {
-        available_tables += line + "\n";
+    for(line; getline(index, line);) {
+
+        string nameTable = split(line,'\t',0); //obtenho o primeiro nome
+        Table atual(nameTable);
+
+        string campos = line.substr(nameTable.size()+1,line.size()); //retiro no nome da tabela da string
+
+        int i = 0;
+        for(int i = 0; i < campos.size(); i++){
+
+            if(campos.at(i) == '\t'){
+                campos.at(i) = ';';
+            }
+        }
+
+        vector<Field> listaFields = splitField(campos); //obtenho os campos e seus respectivos formatos
+        atual += listaFields; //insiro os campos na tabela
+
+        listaTabelas.addTable(atual); //insiro a tabela na listadas tabelas
     }
 
     index.close();
-
-    // Checks line by line
-    for(int i=0;i<get_delimiters(available_tables, '\n'); i++){
-        if(split(split(available_tables, '\n', i), '\t', 0) == table){
-            cout << "A tabela ja existe" << endl;
-            return false;
-        }
-    }
-
-    // Writes name to file if it doesn't exists
-    ofstream ondex;
-    ondex.open("metadados.txt", ios_base::app);
-    ondex << table << '\t' << better_fields << '\n';
-    ondex.close();
-
-    // Creates Table file
-    ofstream aux;
-    aux.open("Table_" + table + ".txt");
-    string header;
-
-    // Writes table header
-    for(int i=0;i<get_delimiters(fields, ';'); i++){
-        header += split(split(fields, ';', i), ':', 1);
-        if(i < get_delimiters(fields, ';')-1)
-            header += '\t';
-    }
-    header += '\n';
-    aux << header;
-    aux.close();
-    return true;
 }
 
-// AT Command operation
+/* "CT tabela tipo1:nome1;tipo2:nome2;tipoN:nomeN"
+Cria um arquivo vazio associado ao nome tabela e o registra como ativo na
+base, sendo campos uma lista de especificações dos
+campos que formarão o arquivo.
+*/
+bool create_table(ListTable &listaTabelas, const Table &table, string fields){
+
+    string better_fields;
+
+    // Checks if file exists
+    if(!file_exists("metadados.txt")){
+        ofstream index;
+        index.open("metadados.txt", ios_base::out);
+        index.close();
+    }
+
+    if(listaTabelas.existTable(table.getNameTable())){
+        //tabela já existe
+        cout << "A tabela ja existe" << endl;
+        return false;
+    } else{
+
+        ofstream ondex; // Writes name to file if it doesn't exists
+        ondex.open("metadados.txt", ios_base::app);
+        ondex << table << '\t' << table.getField() << '\n';
+        ondex.close();
+
+        // Creates Table file
+        ofstream aux;
+        aux.open(table.getNameFile());
+        string header;
+
+        for(Field atual: table.getField()){
+            header += atual.getName()+'\t';
+        }
+
+        header.erase(header.size()-1, 1); //removo o último '/t'
+        aux << header << '\n';
+        aux.close();
+        return true;
+    }
+}
+
+/* "AT TABELA"
+Apresenta um resumo dos metadados da tabela indicada: arquivos, campos e índices existentes.
+*/
 bool show_metadata(const Table &table, bool verbose=true){
     string data = readfile("metadados.txt");
     string extracted;
@@ -201,7 +268,9 @@ string validate_registry(const Table &table, string fields){
     return output;
 }
 
-// IR Command Operation
+/* "IR tabela valor1;valor2:valorN"
+Insere o registro no arquivo de tabela, usando a política de inserção adequada.
+*/
 bool add_registry(const Table &table, string fields){
     string better_fields;
 
@@ -228,12 +297,16 @@ bool add_registry(const Table &table, string fields){
     return true;
 }
 
-// RT Command operation
-bool remove_table(const Table &table){
-    string all_data;
-    string available_tables;
-    bool found = false;
-    string extracted;
+/* "RT tabela"
+Apaga o arquivo relativo a tabela e remove seus metadados da base, bem como estruturas associadas.
+*/
+bool remove_table(ListTable &listaTabelas, const Table &table){
+
+    if(!listaTabelas.existTable(table.getNameTable())){ //tabela não existe
+        return false;
+    }
+
+    listaTabelas.removeTable(table.getNameTable());
 
     // Checks if file exists
     if(!file_exists("metadados.txt")){
@@ -242,36 +315,21 @@ bool remove_table(const Table &table){
         index.close();
     }
 
-    // Opens file for reading
-    available_tables = readfile("metadados.txt");
+    ofstream metadados;
+    metadados.open("metadados.txt", ios_base::out);
 
-    // Checks line by line
-    for(int i=0;i<get_delimiters(available_tables, '\n'); i++){
-        extracted = split(split(available_tables, '\n', i), '\t', 0);
-        if(extracted == table){
-            // If found in tables index
-            found = true;
-        }
-        else if(extracted == ""){
-            continue;
-        }
-        else{
-            all_data += split(available_tables, '\n', i) + '\n';
-        }
+    for(Table atual : listaTabelas.getTable()){
+        metadados << atual << '\t' << atual.getField() << '\n';
     }
-    if(found){
-        cout << "Tabela " << table << " removida da base" << endl;
-        ofstream metadados;
-        metadados.open("metadados.txt", ios_base::out);
-        metadados << all_data;
-        metadados.close();
 
-        string filename = "Table_" + table + ".txt";
-        const char* char_name = filename.c_str();
-        remove(char_name);
-        return true;
-    }
-    return false;
+    metadados.close();
+
+    string filename = table.getNameFile();
+    const char* char_name = filename.c_str();
+    remove(char_name);
+
+    cout << "Tabela " << table << " removida da base" << endl;
+    return true;
 }
 
 // INSPIRED BY CPP DOCUMENTATION
@@ -302,7 +360,11 @@ int get_correct_field(const Table &table, string field){
     return -1;
 }
 
-// BR U Command operation
+
+/* "BR U tabela busca"
+Busca em tabela pelo
+primeiro registro que satisfaça o critério busca.
+*/
 bool singular_search(const Table &table, string key, const vector<RegisterDeleted> &deletados){
     int pos = get_correct_field(table, key);
 
@@ -325,7 +387,11 @@ bool singular_search(const Table &table, string key, const vector<RegisterDelete
     return false;
 }
 
-// BR N Command operation
+/* "BR N tabela busca"
+Busca em tabela todos os
+registros que satisfaçam o
+critério busca.
+*/
 bool deep_search(const Table &table, string key, const vector<RegisterDeleted> &deletados){
     bool found = false;
     int pos = get_correct_field(table, key);
@@ -352,48 +418,10 @@ bool deep_search(const Table &table, string key, const vector<RegisterDeleted> &
     return false;
 }
 
-vector<Field> splitField(string command){
-    int inicio = 0;
-    string nameField = "";
-    string type = "";
-
-    vector<Field> listaCampos;
-
-    int i = -1;
-    for(char atual: command){
-        i++;
-
-        //se for espaço eu removo da string
-        if(atual == ' '){
-            atual = '_';
-        }
-
-        //se for : siginifca que estamos terminando a primeira parte do bloco
-        if(atual == ':'){
-            type = command.substr(inicio, i - inicio);
-            inicio = i+1;
-        }
-
-        //se for : siginifca que estamos terminando a segunda parte do bloco
-        if(atual == ';' || command.length() <= (i+1)){
-            nameField = command.substr(inicio, i - inicio);
-            inicio = i+1;
-        }
-
-        if(nameField != "" && type != ""){
-            Field campo(nameField, type);
-            listaCampos.push_back(campo);
-
-            nameField.clear();
-            type.clear();
-            continue;
-        }
-    }
-
-    return listaCampos;
-}
-
-// RR remove register operation
+/* "RR tabela"
+Remove, segundo a política de remoção da
+tabela, todos os registros da última busca realizada.
+*/
 bool remove_register(const Table &table, vector<RegisterDeleted> &deletados, vector<RegisterSearch> &resultados){
     return false;
 }
@@ -404,7 +432,8 @@ bool list_search_table(const Table &tabela, vector<RegisterSearch> &resultados){
 }
 
 bool typeValid(string type){
-    if(type == "INT" || type == "FLT" || type == "STR" || type == "BIN"){
+    type = toUpperAllString(type);
+    if( type == "INT" || type == "FLT" || type == "STR" || type == "BIN"){
         return true;
     }
 
@@ -413,8 +442,18 @@ bool typeValid(string type){
 }
 
 class interpreter {
+
 public:
+    interpreter(){
+        loadListTable(listaTabelas);
+    }
+
+    vector<RegisterSearch> listaResultados;
+    vector<RegisterDeleted> listaRemovidos;
+    ListTable listaTabelas;
+
     bool parse(string input){
+
         int fields = get_delimiters(input, ' ');
         string command;
         string camps;
@@ -424,9 +463,6 @@ public:
         string key;
         string tableName;
         Table table;
-        vector<RegisterSearch> listaResultados;
-        vector<RegisterDeleted> listaRemovidos;
-        ListTable listaTabelas;
 
         // Look for 1 field commands
         if(fields == 1){
@@ -451,8 +487,12 @@ public:
             table.setNameTable(tableName);
 
             if(command == "RT" ){
-                if(remove_table(table))
+                if(remove_table(listaTabelas,table)){
+                    listaTabelas.removeTable(table);
+                    listaResultados = listaResultados - table;
+                    listaRemovidos = listaRemovidos - table;
                     return true;
+                }
                 else{
                     cout << "A tabela nao existe\n";
                     return false;
@@ -529,7 +569,7 @@ public:
                     }
                 }
 
-                if(!create_table(table, camps)){
+                if(!create_table(listaTabelas, table, camps)){
                     return false;
                 }
 

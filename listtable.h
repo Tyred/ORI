@@ -7,15 +7,15 @@ class ListTable{
 
 private:
     vector<Table> tabelas;
-    bool existTable(string nameTable) const;
-
 public:
     ListTable();
-
+    bool existTable(string nameTable) const;
     bool getTable(string name, Table &tabela) const;
+    vector<Table> getTable() const;
     bool addTable(Table table);
     bool addTable(string nameTable);
     bool removeTable(string name);
+    bool removeTable(const Table &tabela);
 
     bool addField(string nameTable, string nameField, string type);
     bool removeField(string nameTable, string nameField);

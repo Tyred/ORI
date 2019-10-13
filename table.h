@@ -32,7 +32,17 @@ public:
 
     bool existField(string nameField) const;
     string& operator+(string& txt);
+    Table& operator+=(const Field& campos);
     Table& operator+=(const vector<Field>& campos);
+
+    Table& operator-=(const Field& campos);
+    Table& operator-=(const vector<Field>& campos);
+
+    bool operator==(const Table& tabela)const;
+
+    string getNameFile() const{
+        return "Table_" + this->name_table + ".txt";
+    }
 
 };
 string operator+(const string& txt, const Table& table);
