@@ -495,6 +495,82 @@ bool remove_register(const Table &table, vector<Register> &registros){
     return false;
 }
 
+// CI A/H Operation
+bool create_index(string type, string table, string field){
+    string metadata;
+    string accumulator;
+    string new_entry;
+    string extracted;
+    string extracted_name;
+    bool found = false;
+
+    if(type == "A"){
+        metadata = readfile("metadados.txt");
+
+        // Checks line by line
+        for(int i=0;i<get_delimiters(metadata, '\n'); i++){
+            extracted = split(metadata, '\n', i);
+            extracted_name = split(split(metadata, '\n', i), '\t', 0);
+            if(toUpper(extracted_name) == table){
+                for(int j=1;j<get_delimiters(extracted, '\t');j++){
+                    if(field == toUpper(split(split(extracted, '\t', j), ':', 1))){
+                        if(get_substring(split(extracted, '\t', j), 0, 3) == "INT"){
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                new_entry = split(metadata, '\n', i) + "\tTREE:" + field + '\n';  
+            }
+            else{
+                accumulator += split(metadata, '\n', i) + '\n';
+            }
+        }
+    }
+    else if(type == "H"){
+        metadata = readfile("metadados.txt");
+
+        // Checks line by line
+        for(int i=0;i<get_delimiters(metadata, '\n'); i++){
+            extracted = split(metadata, '\n', i);
+            extracted_name = split(split(metadata, '\n', i), '\t', 0);
+            if(toUpper(extracted_name) == table){
+                for(int j=1;j<get_delimiters(extracted, '\t');j++){
+                    if(field == toUpper(split(split(extracted, '\t', j), ':', 1))){
+                        if(get_substring(split(extracted, '\t', j), 0, 3) == "INT"){
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                new_entry = split(metadata, '\n', i) + "\tHASH:" + field + '\n';                        
+
+            }
+            else{
+                accumulator += split(metadata, '\n', i) + '\n';
+            }
+        }
+    }
+    else{
+        cout << "Tipo de indexação inválida: (" << type << ")" << endl;
+        return false;
+    }
+
+    // If table exists
+    if(found){
+        ofstream metafile;
+        metafile.open("metadados.txt", ios_base::out);
+        metafile << accumulator << new_entry;
+        metafile.close();
+        return true;
+    }
+    else{
+        cout << "Tabela ou campo inválidos" << endl;
+        return false;
+    }
+}
+
+
 bool typeValid(string type){
 
     if( type == "INT" || type == "FLT" || type == "STR" || type == "BIN"){
@@ -654,10 +730,13 @@ public:
 
             table.setNameTable(tableName);
 
+
+            /*
             if(!listaTabelas.getTable(tableName, table)){
                 cout << "Tabela inexistente!" <<endl;
                 return false;
             }
+            */
 
             if(command == "BR" && type == "N"){
                 cout << endl;
@@ -675,15 +754,23 @@ public:
                     return false;
                 }
             }
-            else if(command == "CI" &&type == "A"){         // type == "H")
-                cout << "Indice para a tabela estruturado como árvore " << table << ' ' << "criado, com chave de busca " << search << endl;
-                cout << "Comando " << command << " " << type << " interpretado" << endl;
-                return true;
+            else if(command == "CI" && type == "A"){         // type == "H")
+                if(create_index(type, tableName, search)){
+                    cout << "Indice para a tabela estruturado como árvore " << table << ' ' << "criado, com chave de busca " << search << endl;
+                    return true;
+                }
+                else{
+                    return false;
+                }
             }
-            else if(command == "CI" &&type == "H"){         // type == "H")
-                cout << "Indice para a tabela estruturado como hashing" << table << ' ' << "criado, com chave de busca " << search << endl;
-                cout << "Comando " << command << " " << type << " interpretado" << endl;
-                return true;
+            else if(command == "CI" && type == "H"){         // type == "H")
+                if(create_index(type, tableName, search)){
+                    cout << "Indice para a tabela estruturado como hashing" << table << ' ' << "criado, com chave de busca " << search << endl;
+                    return true;
+                }
+                else{
+                    return false;
+                }
             }
             else{
                 cout << "Comando Inexistente" << endl;
