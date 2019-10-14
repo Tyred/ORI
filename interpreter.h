@@ -7,8 +7,7 @@
 #include <stdio.h>
 #include <regex>
 #include "helper_functions.h"
-#include "registersearch.h"
-#include "registerdeleted.h"
+#include "register.h"
 #include "listtable.h"
 
 using namespace std;
@@ -96,18 +95,13 @@ void loadListTable(ListTable &listaTabelas){
     index.close();
 }
 
-void loadLists(const ListTable &listaTabelas, vector<RegisterSearch> &listaResultados,vector<RegisterDeleted> &listaRemovidos){
+void loadLists(const ListTable &listaTabelas, vector<Register> &lista){
 
     for(Table tabelas:listaTabelas.getTable()){
 
-        RegisterDeleted deletados;
-        deletados.setTable(tabelas);
-        listaRemovidos.push_back(deletados);
-
-        RegisterSearch resultados;
-        resultados.setTable(tabelas);
-        listaResultados.push_back(resultados);
-
+        Register registros;
+        registros.setTable(tabelas);
+        lista.push_back(registros);
     }
 }
 
@@ -378,7 +372,7 @@ int get_correct_field(const Table &table, string field){
 /* "BR U tabela busca"
 Busca em tabela pelo primeiro registro que satisfaça o critério busca.
 */
-bool singular_search(const Table &table, string search, vector<RegisterSearch> &resultado , vector<RegisterDeleted> &deletados){
+bool singular_search(const Table &table, string search, vector<Register> &listaRegistros){
 
     string nomeCampo = split(search,':',0);
     string valorCampo = split(search,':',1);
@@ -400,21 +394,16 @@ bool singular_search(const Table &table, string search, vector<RegisterSearch> &
     string read_data = readfile(table.getNameFile());
     string* data = split(read_data, '\n');
 
-    cout << endl;
-
     for(int i = 0; i < get_delimiters(read_data, '\n'); i++){
 
         if(split(data[i], '\t', pos) == valorCampo){
 
-            Information info((unsigned int) i);
-            RegisterSearch search(table);
-            search.addSearch(info);
+            Information info(i);
+            Register registro(table);
+            registro.addSearch(info);
 
-            if(existeOcorrencia(search,deletados)){
-                cout << "Registro removido logicamente" << endl;
-            } else {
-
-                concatenaInformacoes(search,resultado);
+            if(!existeOcorrenciaDeleted(table, info, listaRegistros)){
+                concatenaInformacoesSearch(registro, listaRegistros);
                 cout  << data[i] << endl;
                 return true;
             }
@@ -431,7 +420,7 @@ Busca em tabela todos os
 registros que satisfaçam o
 critério busca.
 */
-bool deep_search(const Table &table, string search, vector<RegisterSearch> &resultado , vector<RegisterDeleted> &deletados){
+bool deep_search(const Table &table, string search, vector<Register> &listaRegistros){
 
     bool found = false;
 
@@ -459,16 +448,13 @@ bool deep_search(const Table &table, string search, vector<RegisterSearch> &resu
 
         if(split(data[i], '\t', pos) == valorCampo){
 
-            Information info((unsigned int) i);
-            RegisterSearch search(table);
-            search.addSearch(info);
+            Information info(i);
+            Register registro(table);
+            registro.addSearch(info);
 
-            if(existeOcorrencia(search, deletados)){
-                cout << "Registro removido logicamente" << endl;
-            } else {
-
-                concatenaInformacoes(search,resultado);
-                cout << data[i] << endl;
+            if(!existeOcorrenciaDeleted(table, info, listaRegistros)){
+                concatenaInformacoesSearch(registro, listaRegistros);
+                cout  << data[i] << endl;
                 found = true;
             }
         }
@@ -487,29 +473,25 @@ bool deep_search(const Table &table, string search, vector<RegisterSearch> &resu
 Remove, segundo a política de remoção da
 tabela, todos os registros da última busca realizada.
 */
-bool remove_register(const Table &table, vector<RegisterDeleted> &deletados, vector<RegisterSearch> &resultados){
+bool remove_register(const Table &table, vector<Register> &registros){
 
-    for(int i = 0; i < deletados.size(); i++){
-        if(deletados.at(i).getTable() == table){
+    for(int i = 0; i < registros.size(); i++){
 
-            if(resultados.at(i).getSearch().size() == 0){
+        if(registros.at(i).getTable() == table){
+
+            if(registros.at(i).getSearch().size() == 0){ //se não houver nenhum registro a ser exibido
                 return false;
             }
 
-            for(Information info: resultados.at(i).getSearch()){
-                deletados.at(i).addInfo(info);
+            for(Information info: registros.at(i).getSearch()){
+                registros.at(i).addDeleted(info);
             }
 
-            resultados.at(i).clearSearch();
+            registros.at(i).clearSearch();
             return true;
         }
     }
 
-    return false;
-}
-
-// include list searchs
-bool list_search_table(const Table &tabela, vector<RegisterSearch> &resultados){
     return false;
 }
 
@@ -528,11 +510,10 @@ class interpreter {
 public:
     interpreter(){
         loadListTable(listaTabelas);
-        loadLists(listaTabelas, listaResultados, listaRemovidos);
+        loadLists(listaTabelas, listaRegistros);
     }
 
-    vector<RegisterSearch> listaResultados;
-    vector<RegisterDeleted> listaRemovidos;
+    vector<Register> listaRegistros;
     ListTable listaTabelas;
 
     bool parse(string input){
@@ -572,8 +553,7 @@ public:
             if(command == "RT" ){
                 if(remove_table(listaTabelas,table)){
                     listaTabelas.removeTable(table);
-                    listaResultados = listaResultados - table;
-                    listaRemovidos = listaRemovidos - table;
+                    listaRegistros = listaRegistros - table;
                     return true;
                 }
                 else{
@@ -594,10 +574,10 @@ public:
             }
             else if(command == "RR"){
 
-                if(remove_register(table, listaRemovidos, listaResultados)){
-                    cout << "Valores dos registros da ultima busca removidos da tabela " << table << ':' << endl;
+                if(remove_register(table, listaRegistros)){
+                    cout << "Valores dos registros da ultima busca removidos da tabela " << table << endl;
                 } else{
-                    cout << "Não foi possível remover o registro da tabela " << table << ':' << endl;
+                    cout << "Não foi possível remover o registro da tabela " << table << endl;
                 }
 
                 return true;
@@ -681,7 +661,7 @@ public:
 
             if(command == "BR" && type == "N"){
                 cout << endl;
-                if(deep_search(table, search, listaResultados, listaRemovidos)){
+                if(deep_search(table, search, listaRegistros)){
                     return true;
                 } else{
                     return false;
@@ -689,7 +669,7 @@ public:
             }
             else if(command == "BR" && type == "U"){
                 cout << endl;
-                if(singular_search(table, search, listaResultados,listaRemovidos)){
+                if(singular_search(table, search, listaRegistros)){
                     return true;
                 } else {
                     return false;

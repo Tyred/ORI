@@ -19,10 +19,16 @@ int main(int args, char** argv){
     // Modo Texto
     if(argv[1] == NULL){
         while(input != "EB" && getline(std::cin, input)){
+
             toUpperString(input);
-            if(input.empty()) continue; // Ignora comando vazio
+
+            if(input.empty()){
+                continue; // Ignora comando vazio
+            }
+
             input = prepare_string(input);
-            if(!a.parse(input)) break;
+
+            a.parse(input);
         }
     }
     else{ // Modo Arquivo
@@ -33,7 +39,6 @@ int main(int args, char** argv){
         text_data = new char[get_file_size(&file)];
         file.read(text_data, get_file_size(&file));
         str_text_data = string(text_data);
-
 
         // Separa comando por comando
         commands = new string[get_delimiters(str_text_data, '\n')];

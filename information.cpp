@@ -1,8 +1,9 @@
 #include "information.h"
 
-Information::Information(unsigned int begin, unsigned int end, unsigned int index){
-    this->end = end;
-    this->begin = begin;
+Information::Information(int index, int begin,int end){
+   this->index = (unsigned int) index;
+    this->end = (unsigned int) end;
+    this->begin = (unsigned int) begin;
 }
 
 unsigned int Information::getBegin() const {
@@ -34,11 +35,7 @@ void Information::setIndex(unsigned int index){
 }
 
 bool Information::operator ==(const Information &b) const{
-    if (this->index == b.getIndex()){ //verifico se o index é igual
-        return true;
-    }
-
-    if (this->begin == b.getBegin() && this->end == b.getEnd()){ //verifico se o intervalo é igual
+    if (this->index == b.index){ //verifico se o index é igual
         return true;
     }
 
