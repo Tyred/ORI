@@ -560,6 +560,10 @@ bool create_index(string type, string table, string field){
     if(found){
         ofstream metafile;
         metafile.open("metadados.txt", ios_base::out);
+
+        if(accumulator[0] == '\n')
+            accumulator = get_substring(accumulator, 1, accumulator.length());
+
         metafile << accumulator << new_entry;
         metafile.close();
         return true;
