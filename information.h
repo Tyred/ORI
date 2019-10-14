@@ -7,7 +7,7 @@ class Information{
         unsigned int begin;
         unsigned int end;
     public:
-        Information(unsigned int begin = 0,unsigned int end = 0, unsigned int index = 0);
+        Information(unsigned int index = 0, unsigned int begin = 0,unsigned int end = 0);
 
         unsigned int getBegin() const;
         unsigned int getEnd() const;

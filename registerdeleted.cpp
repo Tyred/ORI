@@ -52,6 +52,20 @@ bool RegisterDeleted::exist(const Information &info) const{
     return false;
 }
 
+bool RegisterDeleted::exist(const vector<Information> &info) const{
+
+    for(Information removidos : this->listaRemovidos){
+
+        for(Information atual :info){
+            if (removidos == atual){
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 vector<RegisterDeleted>& operator-(vector<RegisterDeleted>&registros, const vector<Table>& tabelas){
     int i = 0;
     for(Table atual : tabelas){
@@ -99,4 +113,19 @@ vector<RegisterDeleted>& operator+(vector<RegisterDeleted>&registros, const Tabl
     }
 
     return registros;
+}
+
+bool existeOcorrencia(RegisterSearch &novo, vector<RegisterDeleted> &deletados){
+
+    for(RegisterDeleted aux : deletados){
+
+        if(novo.getTable() == aux.getTable()){
+
+            if(aux.exist(novo.getSearch())){
+                return true;
+            }
+        }
+    }
+
+    return false;
 }

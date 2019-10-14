@@ -12,7 +12,7 @@ private:
     string name;
     string type;
 public:
-    Field(string name, string type);
+    Field(string name = "", string type = "");
     string getName() const;
     string getType() const;
     void setName(string newName);

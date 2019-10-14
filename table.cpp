@@ -12,6 +12,19 @@ vector<Field> Table::getField() const{
     return this->campos;
 }
 
+int Table::getPosField(string nameField, Field &field) const{
+
+    for(int i = 0; i < this->campos.size(); i++){
+
+        if(this->campos.at(i).getName() == nameField){ //se for o campo procurado
+            field = this->campos.at(i);
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 bool Table::getField(string nameField, Field &field) const{
 
     for (Field campo : this->campos) {

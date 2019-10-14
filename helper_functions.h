@@ -103,16 +103,8 @@ string* split(std::string input, const char delim){
     return aux;
 }
 
-// Faz os dois primeiros caracteres da string serem maiúsculos
+// Passa o texto para maiúsculo
 string toUpperString(string &input){
-    ignoreSpaces(input);
-    input[0] = toupper(input[0]);
-    input[1] = toupper(input[1]);
-
-    return input;
-}
-
-string toUpperAllString(string &input){
 
     for(int i = 0; i < input.size();i++){
         input.at(i) = toupper(input.at(i));

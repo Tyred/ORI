@@ -46,7 +46,7 @@ vector<Field> splitField(string command){
         i++;
 
         if(nameField != "" && type != ""){
-            Field campo(toUpperAllString(nameField), toUpperAllString(type));
+            Field campo(nameField, type);
             listaCampos.push_back(campo);
 
             nameField.clear();
@@ -94,6 +94,21 @@ void loadListTable(ListTable &listaTabelas){
     }
 
     index.close();
+}
+
+void loadLists(const ListTable &listaTabelas, vector<RegisterSearch> &listaResultados,vector<RegisterDeleted> &listaRemovidos){
+
+    for(Table tabelas:listaTabelas.getTable()){
+
+        RegisterDeleted deletados;
+        deletados.setTable(tabelas);
+        listaRemovidos.push_back(deletados);
+
+        RegisterSearch resultados;
+        resultados.setTable(tabelas);
+        listaResultados.push_back(resultados);
+
+    }
 }
 
 /* "CT tabela tipo1:nome1;tipo2:nome2;tipoN:nomeN"
@@ -360,31 +375,55 @@ int get_correct_field(const Table &table, string field){
     return -1;
 }
 
-
 /* "BR U tabela busca"
-Busca em tabela pelo
-primeiro registro que satisfaça o critério busca.
+Busca em tabela pelo primeiro registro que satisfaça o critério busca.
 */
-bool singular_search(const Table &table, string key, const vector<RegisterDeleted> &deletados){
-    int pos = get_correct_field(table, key);
+bool singular_search(const Table &table, string search, vector<RegisterSearch> &resultado , vector<RegisterDeleted> &deletados){
+
+    string nomeCampo = split(search,':',0);
+    string valorCampo = split(search,':',1);
+
+    Field campo(nomeCampo);
+
+    int pos = table.getPosField(nomeCampo,campo);
 
     if(pos < 0){
-        cout << "Campo nao encontrado" << endl;
+        cout << "Campo não encontrado" << endl;
         return false;
     }
 
-    string read_data = readfile("Table_" + table + ".txt");
+    if(campo.getType() == "BIN"){
+        cout << "Não é possível pesquisar campos em formato binário!" << endl;
+        return false;
+    }
+
+    string read_data = readfile(table.getNameFile());
     string* data = split(read_data, '\n');
 
-    for(int i=0; i<get_delimiters(read_data, '\n'); i++){
-        string key_value = split(key, ':', 1);
-        if(split(data[i], '\t', pos) == key_value){
-            cout << data[i] << endl;
-            return true;
+    cout << endl;
+
+    for(int i = 0; i < get_delimiters(read_data, '\n'); i++){
+
+        if(split(data[i], '\t', pos) == valorCampo){
+
+            Information info((unsigned int) i);
+            RegisterSearch search(table);
+            search.addSearch(info);
+
+            if(existeOcorrencia(search,deletados)){
+                cout << "Registro removido logicamente" << endl;
+            } else {
+
+                concatenaInformacoes(search,resultado);
+                cout  << data[i] << endl;
+                return true;
+            }
         }
     }
-    cout << "Registro nao encontrado" << endl;
+
+    cout << "Registro não encontrado" << endl;
     return false;
+
 }
 
 /* "BR N tabela busca"
@@ -392,30 +431,56 @@ Busca em tabela todos os
 registros que satisfaçam o
 critério busca.
 */
-bool deep_search(const Table &table, string key, const vector<RegisterDeleted> &deletados){
+bool deep_search(const Table &table, string search, vector<RegisterSearch> &resultado , vector<RegisterDeleted> &deletados){
+
     bool found = false;
-    int pos = get_correct_field(table, key);
+
+    string nomeCampo = split(search,':',0);
+    string valorCampo = split(search,':',1);
+
+    Field campo(nomeCampo);
+
+    int pos = table.getPosField(nomeCampo,campo);
 
     if(pos < 0){
         cout << "Campo não encontrado" << endl;
         return false;
     }
 
-    string read_data = readfile("Table_" + table + ".txt");
+    if(campo.getType() == "BIN"){
+        cout << "Não é possível pesquisar campos em formato binário!" << endl;
+        return false;
+    }
+
+    string read_data = readfile(table.getNameFile());
     string* data = split(read_data, '\n');
 
-    for(int i=0; i<get_delimiters(read_data, '\n'); i++){
-        string key_value = split(key, ':', 1);
-        if(split(data[i], '\t', pos) == key_value){
-            cout << data[i] << endl;
-            found = true;
+    for(int i = 0; i < get_delimiters(read_data, '\n'); i++){
+
+        if(split(data[i], '\t', pos) == valorCampo){
+
+            Information info((unsigned int) i);
+            RegisterSearch search(table);
+            search.addSearch(info);
+
+            if(existeOcorrencia(search, deletados)){
+                cout << "Registro removido logicamente" << endl;
+            } else {
+
+                concatenaInformacoes(search,resultado);
+                cout << data[i] << endl;
+                found = true;
+            }
         }
     }
-    if(found)
-        return true;
 
-    cout << "Registro nao encontrado" << endl;
-    return false;
+    if(found){
+        return true;
+    } else {
+        cout << "Registro não encontrado" << endl;
+        return false;
+    }
+
 }
 
 /* "RR tabela"
@@ -423,6 +488,23 @@ Remove, segundo a política de remoção da
 tabela, todos os registros da última busca realizada.
 */
 bool remove_register(const Table &table, vector<RegisterDeleted> &deletados, vector<RegisterSearch> &resultados){
+
+    for(int i = 0; i < deletados.size(); i++){
+        if(deletados.at(i).getTable() == table){
+
+            if(resultados.at(i).getSearch().size() == 0){
+                return false;
+            }
+
+            for(Information info: resultados.at(i).getSearch()){
+                deletados.at(i).addInfo(info);
+            }
+
+            resultados.at(i).clearSearch();
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -432,7 +514,7 @@ bool list_search_table(const Table &tabela, vector<RegisterSearch> &resultados){
 }
 
 bool typeValid(string type){
-    type = toUpperAllString(type);
+
     if( type == "INT" || type == "FLT" || type == "STR" || type == "BIN"){
         return true;
     }
@@ -446,6 +528,7 @@ class interpreter {
 public:
     interpreter(){
         loadListTable(listaTabelas);
+        loadLists(listaTabelas, listaResultados, listaRemovidos);
     }
 
     vector<RegisterSearch> listaResultados;
@@ -517,7 +600,6 @@ public:
                     cout << "Não foi possível remover o registro da tabela " << table << ':' << endl;
                 }
 
-                cout << "Comando " << command << " interpretado" << endl;
                 return true;
             }
             else{
@@ -588,23 +670,38 @@ public:
             command = split(input, ' ', 0);
             type = split(input, ' ', 1);
             tableName = split(input, ' ', 2) ;
-            table.setNameTable(tableName);
             search = split(input, ' ', 3);
+
+            table.setNameTable(tableName);
+
+            if(!listaTabelas.getTable(tableName, table)){
+                cout << "Tabela inexistente!" <<endl;
+                return false;
+            }
+
             if(command == "BR" && type == "N"){
-                if(deep_search(table, search, listaRemovidos)) return true;
-                else return false;
+                cout << endl;
+                if(deep_search(table, search, listaResultados, listaRemovidos)){
+                    return true;
+                } else{
+                    return false;
+                }
             }
             else if(command == "BR" && type == "U"){
-                if(singular_search(table, search, listaRemovidos)) return true;
-                else return false;
+                cout << endl;
+                if(singular_search(table, search, listaResultados,listaRemovidos)){
+                    return true;
+                } else {
+                    return false;
+                }
             }
             else if(command == "CI" &&type == "A"){         // type == "H")
-                cout << "Indice para a tabela estruturado como árvore " << table << ' ' << "criado, com chave de busca " << search << endl;;
+                cout << "Indice para a tabela estruturado como árvore " << table << ' ' << "criado, com chave de busca " << search << endl;
                 cout << "Comando " << command << " " << type << " interpretado" << endl;
                 return true;
             }
             else if(command == "CI" &&type == "H"){         // type == "H")
-                cout << "Indice para a tabela estruturado como hashing" << table << ' ' << "criado, com chave de busca " << search << endl;;
+                cout << "Indice para a tabela estruturado como hashing" << table << ' ' << "criado, com chave de busca " << search << endl;
                 cout << "Comando " << command << " " << type << " interpretado" << endl;
                 return true;
             }

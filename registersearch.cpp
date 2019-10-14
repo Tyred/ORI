@@ -7,9 +7,14 @@ RegisterSearch::RegisterSearch(Table tabela){
     this->tabela = tabela;
 }
 
+vector<Information> RegisterSearch::getSearch() const{
+    return this->index_results;
+}
+
 Table RegisterSearch::getTable() const{
     return this->tabela;
 }
+
 void RegisterSearch::setTable(Table novo){
     this->tabela = novo;
 }
@@ -82,7 +87,7 @@ vector<RegisterSearch>& operator+(vector<RegisterSearch>&registros, const Table&
 
     for(RegisterSearch atual : registros){
         if(tabela == atual.getTable()){ //se for igual
-            //atual.setTable(tabela);
+            atual.setTable(tabela);
             existe = true;
             break;
         }
@@ -93,4 +98,16 @@ vector<RegisterSearch>& operator+(vector<RegisterSearch>&registros, const Table&
     }
 
     return registros;
+}
+
+void concatenaInformacoes(const RegisterSearch &registro_novo, vector<RegisterSearch> &lista_resultados){
+
+    for (int i = 0; i < lista_resultados.size(); i++) {
+
+        if(lista_resultados.at(i).getTable() == registro_novo.getTable()){ //se for a mesma tabela
+            lista_resultados.at(i).addSearch(registro_novo.getSearch());
+            break;
+        }
+    }
+
 }

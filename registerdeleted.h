@@ -3,7 +3,7 @@
 
 #include "table.h"
 #include "information.h"
-
+#include "registersearch.h"
 
 class RegisterDeleted{
     private:
@@ -14,6 +14,7 @@ public:
     RegisterDeleted();
 
     bool exist(const Information &info) const;
+    bool exist(const vector<Information> &info) const;
     Table getTable() const;
 
     bool removeInfo(const Information &info);
@@ -26,4 +27,7 @@ vector<RegisterDeleted>& operator-(vector<RegisterDeleted>&registros, const Tabl
 
 vector<RegisterDeleted>& operator+(vector<RegisterDeleted>&registros, const vector<Table>& tabelas);
 vector<RegisterDeleted>& operator+(vector<RegisterDeleted>&registros, const Table& tabela);
+
+bool existeOcorrencia(RegisterSearch &procurados, vector<RegisterDeleted>&deletados);
+
 #endif // REGISTERDELETED_H

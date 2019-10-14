@@ -16,6 +16,7 @@ public:
     Table(const string nameTable = "");
     string getNameTable() const;
     vector<Field> getField() const;
+    int getPosField(string nameField, Field &field) const;
     bool getField(string nameField, Field &field) const;
     bool getField(int position, Field &field) const;
 
