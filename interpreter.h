@@ -559,7 +559,10 @@ bool create_index(string type, string table, string field){
     // If table exists
     if(found){
         ofstream metafile;
+        ofstream indexfile;
         metafile.open("metadados.txt", ios_base::out);
+        indexfile.open("INDEX_" + field + "_" + table + ".txt", ios_base::out);
+        indexfile.close();
 
         if(accumulator[0] == '\n')
             accumulator = get_substring(accumulator, 1, accumulator.length());
@@ -574,6 +577,58 @@ bool create_index(string type, string table, string field){
     }
 }
 
+// RI Operation
+bool remove_index(string table, string key){
+    string metadata;
+    string accumulator;
+    string new_entry;
+    string extracted;
+    bool found;
+    bool index;
+
+    metadata = readfile("metadados.txt");
+
+    for(int i=0;i<get_delimiters(metadata, '\n');i++){
+        extracted = split(metadata, '\n', i);
+        if(toUpper(split(extracted, '\t', 0)) == table){
+            new_entry += split(extracted, '\t', 0) + '\t';
+            for(int j=1;j<get_delimiters(extracted, '\t');j++){
+                index = false;
+                if(split(split(extracted, '\t', j), ':', 0) == "TREE" || split(split(extracted, '\t', j), ':', 0) == "HASH"){
+                    if(toUpper(split(split(extracted, '\t', j), ':', 1)) == key){
+                        found = true;
+                        index = true;
+                    }
+                }
+                if(!index)
+                    new_entry += split(extracted, '\t', j) + "\t";
+            }
+        }
+        else{
+            accumulator += split(metadata, '\n', i) + '\n';
+        }
+    }
+
+    new_entry = get_substring(new_entry, 0, new_entry.length()-1) + '\n';
+
+    if(found){
+        ofstream metafile;
+        metafile.open("metadados.txt", ios_base::out);
+
+        if(accumulator[0] == '\n')
+            accumulator = get_substring(accumulator, 1, accumulator.length());
+
+        metafile << accumulator << new_entry;
+        metafile.close();
+        string fileaux = "INDEX_" + toUpper(key) + "_" + toUpper(table) + ".txt";
+        const char *filename = fileaux.c_str();
+        remove(filename);
+        return true;
+    }
+    else
+        return false;
+
+}
 
 bool typeValid(string type){
 
@@ -692,9 +747,11 @@ public:
                 tableName = split(input, ' ', 1);
                 table.setNameTable(tableName);
                 key = split(input, ' ', 2);
-                cout << "Removido o indice da chave " << key << ' ' << "da tabela " << table << endl;
-                cout << "Comando " << command << " interpretado" << endl;
-                return true;
+                if(remove_index(tableName, key)){
+                    cout << "Removido o indice da chave " << key << ' ' << "da tabela " << table << endl;
+                    return true;
+                }
+                return false;
             }
             // CT commands parsing
             else if(command == "CT"){
