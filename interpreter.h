@@ -201,7 +201,6 @@ string transform_binary(string data){
     string replacement2 = "<CSVAL>";
     string replacement3 = "<TAB&>";
 
-
     return regex_replace(regex_replace(regex_replace(data, r, replacement), r2, replacement2), r3, replacement3);   
 }
 
