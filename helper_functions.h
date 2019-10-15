@@ -136,6 +136,16 @@ string toUpper(string input){
     return input;
 }
 
+// Passa o texto para maiúsculo
+string toLower(string input){
+
+    for(int i = 0; i < input.size();i++){
+        input.at(i) = tolower(input.at(i));
+    }
+
+    return input;
+}
+
 // Lê um arquivo e retorna uma lista de linhas
 string* readlines(string name, int &size){
     string* lines;

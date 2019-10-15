@@ -196,11 +196,13 @@ string get_metadata(const Table &table){
 string transform_binary(string data){
     regex r("\\\n");
     regex r2(";");
+    regex r3("\\\t");
     string replacement = "<ENDL&>";
     string replacement2 = "<CSVAL>";
+    string replacement3 = "<TAB&>";
 
 
-    return regex_replace(regex_replace(data, r, replacement), r2, replacement2);   
+    return regex_replace(regex_replace(regex_replace(data, r, replacement), r2, replacement2), r3, replacement3);   
 }
 
 // IR Command validation
@@ -262,11 +264,11 @@ string validate_registry(const Table &table, string fields){
         }
 
         else if(types[i] == "BIN"){
-            if(!file_exists(input[i])){
+            if(!file_exists(toLower(input[i]))){
                 cout << "Erro: o arquivo binario no campo " << i+1 << " deve existir" << endl;
                 return "";
             }
-            output += transform_binary(readfile(input[i])) + ';';
+            output += transform_binary(readfile(toLower(input[i]))) + ';';
         }
 
     }
@@ -295,7 +297,6 @@ bool add_registry(const Table &table, string fields){
         else
             better_fields += '\t';
     }
-    cout << better_fields << endl;
 
     // Writes registry to table
     ofstream ondex;
