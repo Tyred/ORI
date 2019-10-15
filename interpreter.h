@@ -636,10 +636,13 @@ bool remove_index(string table, string key){
         metafile.open("metadados.txt", ios_base::out);
 
         if(accumulator[0] == '\n')
-            accumulator = get_substring(accumulator, 1, accumulator.length());
+            accumulator = strip(accumulator, '\n') + "\n";
+        if(accumulator[accumulator.length()-1] == '\n')
+            accumulator = get_substring(accumulator, 0, accumulator.length()-2);
 
-        metafile << accumulator << new_entry;
+        metafile << accumulator << "\n" << new_entry;
         metafile.close();
+        
         string fileaux = "INDEX_" + toUpper(key) + "_" + toUpper(table) + ".txt";
         const char *filename = fileaux.c_str();
         remove(filename);
