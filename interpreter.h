@@ -156,7 +156,7 @@ bool show_metadata(const Table &table, bool verbose=true){
     string extracted;
     bool found = false;
 
-    // Checks line by line
+    // Checks line by lineS
     for(int i=0;i<get_delimiters(data, '\n'); i++){
         extracted = split(split(data, '\n', i), '\t', 0);
         if(extracted == table){
@@ -315,6 +315,11 @@ bool remove_table(ListTable &listaTabelas, const Table &table){
         return false;
     }
 
+    Table a = Table();
+
+    listaTabelas.getTable(table.getNameTable(), a);
+    vector<Field> field = a.getField();
+
     listaTabelas.removeTable(table.getNameTable());
 
     // Checks if file exists
@@ -324,6 +329,7 @@ bool remove_table(ListTable &listaTabelas, const Table &table){
         index.close();
     }
 
+    string fileaux;
     ofstream metadados;
     metadados.open("metadados.txt", ios_base::out);
 
@@ -335,9 +341,22 @@ bool remove_table(ListTable &listaTabelas, const Table &table){
 
     string filename = table.getNameFile();
     const char* char_name = filename.c_str();
+
     remove(char_name);
 
+
     cout << "Tabela " << table << " removida da base" << endl;
+
+    for(Field f : field){
+        if(f.getType() == "INT"){
+            cout << "INDEX_" + toUpper(f.getName()) + "_" + toUpper(table.getNameTable()) + ".txt" << endl;
+            fileaux = "INDEX_" + toUpper(f.getName()) + "_" + toUpper(table.getNameTable()) + ".txt";
+            remove(fileaux.c_str());
+        }
+    }
+
+
+
     return true;
 }
 
@@ -565,9 +584,11 @@ bool create_index(string type, string table, string field){
         indexfile.close();
 
         if(accumulator[0] == '\n')
-            accumulator = get_substring(accumulator, 1, accumulator.length());
+            accumulator = strip(accumulator, '\n') + "\n";
+        if(accumulator[accumulator.length()-1] == '\n')
+            accumulator = get_substring(accumulator, 0, accumulator.length()-2);
 
-        metafile << accumulator << new_entry;
+        metafile << accumulator << "\n" << new_entry;
         metafile.close();
         return true;
     }
