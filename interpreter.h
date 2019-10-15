@@ -349,7 +349,6 @@ bool remove_table(ListTable &listaTabelas, const Table &table){
 
     for(Field f : field){
         if(f.getType() == "INT"){
-            cout << "INDEX_" + toUpper(f.getName()) + "_" + toUpper(table.getNameTable()) + ".txt" << endl;
             fileaux = "INDEX_" + toUpper(f.getName()) + "_" + toUpper(table.getNameTable()) + ".txt";
             remove(fileaux.c_str());
         }

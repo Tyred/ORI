@@ -103,6 +103,19 @@ string* split(std::string input, const char delim){
     return aux;
 }
 
+// Faz igual a função split, mas retorna a lista de separações no delimitador delim
+string strip(std::string input, const char delim){
+    int j=0;
+    string aux;
+
+    for(int i=0;i<input.length();i++){
+        if(input[i] != delim){
+            aux += input[i];
+        }
+    }
+    return aux;
+}
+
 // Passa o texto para maiúsculo
 string toUpperString(string &input){
 
