@@ -1,0 +1,109 @@
+/* B-Tree
+ * Author:	Caleb Baker
+ * Date:	10/8/17
+ * Summary:	A B-Tree data structure. Supports lg(n) time search, insert, and delete.
+ */
+#pragma once
+
+#include <utility>
+
+#define NULL 0
+#define SEARCH_KEY_NOT_FOUND 's'
+#define REMOVE_KEY_NOT_FOUND 'r'
+#define NEW_ROOT 2
+#define MODIFIED_NOT_ROOT 1
+#define NOT_MODIFIED 0
+
+
+/* struct para representar nós de uma árvore b */
+template <typename T>
+struct BNode {
+	BNode<T> **child;	/* Matriz de ponteiros para crianças. */
+	T *key;				/* Vetor para as chaves */
+	unsigned size;		/* Número de chaves */
+	bool leaf;			/* Se o nó é uma folha */
+};
+
+
+typedef char BTREE_EXCEPTION;
+
+
+/* Classe para representar bTree */
+template <typename T>
+class BTree {
+public:
+
+	/* Construtor
+       O primeiro parâmetro é o grau mínimo da árvore.
+	   O segundo parâmetro é a função de comparação de chaves da árvore.
+	   Terceiro parâmetro é uma função que imprime as chaves. */
+	BTree(unsigned, bool (*)(T, T), void (*)(T) = NULL);
+
+	/* Destrutor. */
+	~BTree<T>();
+
+	/* Insere a chave na árvore
+	   Tempo logorítmico. */
+	void insert(T);
+
+	/* Remove as chaves da árvore.
+	   Lança BTREE_EXCEPTION se nenhum item foi encontrado.
+       Tempo logarítmico. */
+	T remove(T);
+
+	/* Função para encontrar uma chave na árvore.
+	   returnValue.first é o nó em que a chave está.
+	   return Value.second é o índice correto na matriz de chaves nesse nó
+	   Tempo logarítmico. */
+	std::pair<BNode<T>*, unsigned> search(T);
+
+	/* Usa pesquisa mas retorna apenas o nó, não a chave por completa.
+	   Útil quando T é um par de valores-chave e menos que apenas olha para a chave.
+	   Devolve BTREE_EXCEPTION se nenhum item correspondente ao parâmetro for encontrado
+	   Tempo logarítmico. */
+	T searchKey(T);
+
+	/* Printa a árvore em O(n), tempo linear */
+	void print();
+
+private:
+
+	/* Inicializa Nós */
+	void initializeNode(BNode<T>*);
+
+	/* Função recursiva para destrutor */
+	void freeNode(BNode<T>*);
+
+	/* Encontrar índice das chaves */
+	unsigned findIndex(BNode<T>*, T);
+
+	/* Inserir nós */
+	unsigned nodeInsert(BNode<T>*, T);
+
+	/* Deletar o nó da chave */
+	T nodeDelete(BNode<T>*, unsigned);
+
+	/* Função que divide quando os nós estao cheios */
+	void splitChild(BNode<T>*, int);
+
+	/* Mescla dois filhos de um nó em um determinado índice em um filho. */
+	char mergeChildren(BNode<T>*, unsigned);
+
+	/* Garante que o filho de um nó em um índice especificado tenha itens >= quantidade de índices permitidos. */
+	char fixChildSize(BNode<T>*, unsigned);
+
+	/* Printa subárvores recursivamente */
+	void printNode(BNode<T>*, unsigned);
+
+	// Nó raiz. */
+	BNode<T> *root;
+
+	/* Função de comparação usada para gerenciar o posicionamento do elemento. */
+	bool (*lessThan)(T, T);
+
+	/* Função usada para printar as chaves da árvore. */
+	void (*printKey)(T);
+
+	/* Grau mínimo da árvore. */
+	unsigned minDegree;
+};
