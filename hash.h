@@ -26,7 +26,7 @@ void inicializa_hash(std::string hash_path, int num_elem);
 void insere_hash(std::string hash_path, Par p);
 
 // Retorna todos os pares que contém a chave na hash de hash_path
-std::vector<Par> busca_hash(std::string hash_path, int chave);
+std::vector<long int> busca_hash(std::string hash_path, int chave);
 
 
 // Funções internas

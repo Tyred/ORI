@@ -75,9 +75,41 @@ void insere_hash(std::string hash_path, Par p)
     fclose(arquivo);
 }
 
-std::vector<Par> busca_hash(std::string hash_path, int chave)
+std::vector<long int> busca_hash(std::string hash_path, int chave)
 {
-    printf("Ainda não implementado\n");
+    int qtd_blocos;
+    long int index;
+    std::vector<long int> resultados;
+    Bloco blk;
+
+    FILE *arquivo = fopen(hash_path.c_str(), "rb+");
+    if (arquivo == NULL)
+    {
+        std::cout << "Erro ao abrir o arquivo " + hash_path + "\n";
+        exit(1);
+    }
+
+    // Obtendo número de blocos (iniciais) na hash em questão
+    fread(&qtd_blocos, sizeof(qtd_blocos), 1, arquivo);
+
+    // Indice é qual bloco deve ser lido, obtendo o número do bloco - 1 e 
+    // multiplicando por BLOCK_SIZE
+    index = (hash_func(chave, qtd_blocos) * BLOCK_SIZE) + sizeof(qtd_blocos);
+
+    do
+    {
+        blk = le_bloco(arquivo, index);
+        index = blk.prox;
+        for (int i = 0; i < blk.num_elem; i++)
+        {
+            if (blk.arr[i].chave == chave)
+                resultados.push_back(blk.arr[i].cont);
+        }
+    } while (blk.prox != -1);
+    
+    fclose(arquivo);
+
+    return resultados;
 }
 
 static int hash_func(int chave, int M)
@@ -127,7 +159,7 @@ static void insere_bloco(FILE *arquivo, long int index, Par p)
         aux.cont  = -1;
 
         // Criando bloco vazio
-        blk.num_elem = 0;
+        blk.num_elem = 1;
         blk.prox = -1;
         blk.arr[0] = p;
         for (int i = 1; i < BLOCK_CAP; i++)
@@ -194,9 +226,9 @@ void imprime_hash(std::string path)
         
         if (!feof(arquivo))
         {
-            printf(" Indice: %ld\n", pos);
+            printf(" Indice ini: %ld\n", pos);
 
-            printf(" N. elem:   %d\n", blk.num_elem);
+            printf(" Num. elem: %d\n", blk.num_elem);
             printf(" Prox. blk: %ld\n", blk.prox);
             for (int j = 0; j < BLOCK_CAP; j++)
                 printf(" arr[%d] = (%d, %ld)\n", j, blk.arr[j].chave, blk.arr[j].cont);
