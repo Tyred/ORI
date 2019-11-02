@@ -191,6 +191,39 @@ string get_metadata(const Table &table){
     return "";
 }
 
+// Return true if field from table is hash indexed
+bool field_hash_exists(const Table &table, string field) {
+    string metadata = get_metadata(table);
+    string goal = "HASH:" + toUpper(field);
+
+    if (metadata.find(goal) != string::npos)
+        return true;
+    else
+        return false;
+}
+
+// Return true if any field from table is hash indexed
+bool hash_exists(const Table &table) {
+    string metadata = get_metadata(table);
+    string goal = "HASH";
+
+    if (metadata.find(goal) != string::npos)
+        return true;
+    else
+        return false;
+}
+
+// Return registry count of given table
+int registry_count(const Table &table) {
+    int res = 0, i;
+    string line;
+    ifstream tbl("Table_" + table.getNameTable() + ".txt");
+
+    for (i = 0; getline(tbl, line); i++);
+    
+    return i - 1;
+}
+
 // Binary file data transformation
 // Turns \n into <ENDL&> and ; into <CSVAL> comma-separated-value
 string transform_binary(string data){
@@ -287,6 +320,11 @@ bool add_registry(const Table &table, string fields){
     fields = validate_registry(table, fields);
     if(fields == ""){
         return false;
+    }
+
+    if (hash_exists(table)) {
+        cout << "Existe índice hash na tabela, inserção não permitida" << endl;
+        return true;
     }
 
     // Fixes fields separator
@@ -493,6 +531,11 @@ tabela, todos os registros da última busca realizada.
 */
 bool remove_register(const Table &table, vector<Register> &registros){
 
+    if (hash_exists(table)) {
+        cout << "Existe índice hash na tabela, remoção não permitida" << endl;
+        return true;
+    }
+
     for(int i = 0; i < registros.size(); i++){
 
         if(registros.at(i).getTable() == table){
@@ -547,7 +590,6 @@ bool create_index(string type, string table, string field){
     }
     else if(type == "H"){
         metadata = readfile("metadados.txt");
-
         // Checks line by line
         for(int i=0;i<get_delimiters(metadata, '\n'); i++){
             extracted = split(metadata, '\n', i);
