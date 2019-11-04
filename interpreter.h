@@ -634,13 +634,11 @@ bool create_index(string type, string table, string field){
         metafile << accumulator << "\n" << new_entry;
         metafile.close();
 
+        // Cria índice hash
         if (type == "H") {
             Table tbl(table);
-            // Field f;
 
             int reg_count = registry_count(tbl);
-            // getFieldPos() não está funcionando
-            // int field_pos = tbl.getPosField(field, f);
             int field_pos = 0;
             int reg_pos;
 
@@ -655,7 +653,8 @@ bool create_index(string type, string table, string field){
                 // Descarta o cabeçalho na tabela
                 getline(tablefile, line);
 
-                // ===== Não manter isso! Temporário até Tabela::getFieldPos() estar arrumado
+                // Solução temporária para achar a pos do campo, já que 
+                // getFieldPos() depende de adicionar manualmente os campos
                 stringstream table_fields(line);
                 do {
                     if (table_fields.rdbuf()->in_avail() == 0) {
@@ -671,7 +670,6 @@ bool create_index(string type, string table, string field){
                     cout << "Campo " + field + " não encontrado na tabela" << endl;
                     exit(1);
                 }
-                // ===== Até aqui
                 
                 for (int i = 0; i < reg_count; i++) {
                     p.cont = tablefile.tellg();
@@ -687,7 +685,7 @@ bool create_index(string type, string table, string field){
 
                     insere_hash(hash_path, p);
                 }
-                // Para debugar os conteúdos da hash, e verificar se está tudo correto
+                // Para debugar os conteúdos da hash
                 // imprime_hash(hash_path);
             }
             else {
