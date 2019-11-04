@@ -114,7 +114,7 @@ std::vector<long int> busca_hash(std::string hash_path, int chave)
 
 static int hash_func(int chave, int M)
 {
-    int a = 1, b = 1;
+    int a = 9491, b = 11923;
     return ((a * chave) + b) % M;
 }
 
