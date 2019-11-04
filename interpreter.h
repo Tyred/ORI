@@ -4,11 +4,13 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <stdio.h>
 #include <regex>
 #include "helper_functions.h"
 #include "register.h"
 #include "listtable.h"
+#include "hash.h"
 
 using namespace std;
 
@@ -533,7 +535,7 @@ bool remove_register(const Table &table, vector<Register> &registros){
 
     if (hash_exists(table)) {
         cout << "Existe índice hash na tabela, remoção não permitida" << endl;
-        return true;
+        return false;
     }
 
     for(int i = 0; i < registros.size(); i++){
@@ -631,6 +633,70 @@ bool create_index(string type, string table, string field){
 
         metafile << accumulator << "\n" << new_entry;
         metafile.close();
+
+        if (type == "H") {
+            Table tbl(table);
+            // Field f;
+
+            int reg_count = registry_count(tbl);
+            // getFieldPos() não está funcionando
+            // int field_pos = tbl.getPosField(field, f);
+            int field_pos = 0;
+            int reg_pos;
+
+            string hash_path("INDEX_" + field + "_" + table + ".txt");
+            string line, field_cont;
+            Par p;
+
+            inicializa_hash(hash_path, reg_count);
+
+            ifstream tablefile("Table_" + table + ".txt");
+            if (tablefile.is_open()) {
+                // Descarta o cabeçalho na tabela
+                getline(tablefile, line);
+
+                // ===== Não manter isso! Temporário até Tabela::getFieldPos() estar arrumado
+                stringstream table_fields(line);
+                do {
+                    if (table_fields.rdbuf()->in_avail() == 0) {
+                        field_pos = -1;
+                        break;
+                    }
+
+                    table_fields >> line;
+                    field_pos++;
+                } while (line != field);
+
+                if (field_pos == -1) {
+                    cout << "Campo " + field + " não encontrado na tabela" << endl;
+                    exit(1);
+                }
+                // ===== Até aqui
+                
+                for (int i = 0; i < reg_count; i++) {
+                    p.cont = tablefile.tellg();
+                    getline(tablefile, line);
+
+                    // Gambiarra para pegar o field_pos ésimo elemento. Ainda 
+                    // estou pensando numa forma melhor de fazer isso
+                    stringstream ssline(line);
+                    for (int j = 0; j < field_pos - 1; j++) {
+                        ssline >> field_cont;
+                    }
+                    ssline >> p.chave;
+
+                    insere_hash(hash_path, p);
+                }
+                // Para debugar os conteúdos da hash, e verificar se está tudo correto
+                // imprime_hash(hash_path);
+            }
+            else {
+                cout << "Não pode abrir arquivo da tabela " << table << endl;\
+                exit(1);
+            }
+            tablefile.close();
+        }
+
         return true;
     }
     else{
