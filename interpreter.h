@@ -73,12 +73,12 @@ void loadListTable(ListTable &listaTabelas){
     // Opens file for reading
     ifstream index;
     index.open("metadados.txt");
-    for(line; getline(index, line);) {
+    for(; getline(index, line);) {
 
         string nameTable = split(line,'\t',0); //obtenho o primeiro nome
         Table atual(nameTable);
 
-        string campos = line.substr(nameTable.size()+1,line.size()); //retiro no nome da tabela da string
+        string campos = line.substr(nameTable.size()+1, line.size()); //retiro no nome da tabela da string
 
         int i = 0;
         for(int i = 0; i < campos.size(); i++){
@@ -226,6 +226,30 @@ int registry_count(const Table &table) {
     return i - 1;
 }
 
+// Return index count of given table
+int index_count(const Table &table) {
+    int res = 0, i = 0, achou = 0;
+    string line, tabela_nome;
+    ifstream mtd("metadados.txt");
+
+    while (!mtd.eof() && !achou) {
+        getline(mtd, line);
+        stringstream ss(line);
+        ss >> tabela_nome;
+
+        if (tabela_nome == table.getNameTable()) {
+            achou = 1;
+            while (ss.rdbuf()->in_avail() != 0) {
+                ss >> line;
+                if (line.find("HASH:") != string::npos || line.find("TREE:") != string::npos)
+                    i++;
+            }
+        }
+    }
+    
+    return i;
+}
+
 // Binary file data transformation
 // Turns \n into <ENDL&> and ; into <CSVAL> comma-separated-value
 string transform_binary(string data){
@@ -254,9 +278,16 @@ string validate_registry(const Table &table, string fields){
     }
 
     // Checks if number of input has correct number of fields
-    if(n_fields != get_delimiters(meta, '\t')-1){
-        cout << "Numero de campos do registro invalido" << endl;
-        return "";
+    if (!hash_exists(table)) {
+        if(n_fields != get_delimiters(meta, '\t')-1){
+            cout << "Numero de campos do registro invalido" << endl;
+            return "";
+        }
+    } else {
+        if(n_fields != get_delimiters(meta, '\t')- 1 - index_count(table)){
+            cout << "Numero de campos do registro invalido" << endl;
+            return "";
+        }
     }
 
     string* data = split(meta, '\t');
@@ -429,7 +460,7 @@ int get_correct_field(const Table &table, string field){
 
 /* "BR U tabela busca"
 Busca em tabela pelo primeiro registro que satisfaça o critério busca.
-*/
+*/ 
 bool singular_search(const Table &table, string search, vector<Register> &listaRegistros){
 
     string nomeCampo = split(search,':',0);
@@ -437,7 +468,8 @@ bool singular_search(const Table &table, string search, vector<Register> &listaR
 
     Field campo(nomeCampo);
 
-    int pos = table.getPosField(nomeCampo,campo);
+    // int pos = table.getPosField(nomeCampo,campo);
+    int pos = 0;
 
     if(pos < 0){
         cout << "Campo não encontrado" << endl;
@@ -449,22 +481,43 @@ bool singular_search(const Table &table, string search, vector<Register> &listaR
         return false;
     }
 
-    string read_data = readfile(table.getNameFile());
-    string* data = split(read_data, '\n');
+    if (!field_hash_exists(table, nomeCampo)) {
+        string read_data = readfile(table.getNameFile());
+        string* data = split(read_data, '\n');
 
-    for(int i = 0; i < get_delimiters(read_data, '\n'); i++){
+        for(int i = 0; i < get_delimiters(read_data, '\n'); i++){
 
-        if(split(data[i], '\t', pos) == valorCampo){
+            if(split(data[i], '\t', pos) == valorCampo){
 
-            Information info(i);
-            Register registro(table);
-            registro.addSearch(info);
+                Information info(i);
+                Register registro(table);
+                registro.addSearch(info);
 
-            if(!existeOcorrenciaDeleted(table, info, listaRegistros)){
-                concatenaInformacoesSearch(registro, listaRegistros);
-                cout  << data[i] << endl;
-                return true;
+                if(!existeOcorrenciaDeleted(table, info, listaRegistros)){
+                    concatenaInformacoesSearch(registro, listaRegistros);
+                    cout  << data[i] << endl;
+                    return true;
+                }
             }
+        }
+    }
+    else {
+        ifstream tablefile("Table_" + table.getNameTable() + ".txt");
+
+        if (tablefile.is_open()) {
+            string line;
+            int chave = stoi(valorCampo);
+            string hash_path("INDEX_" + nomeCampo + "_" + table.getNameTable() + ".txt");
+            vector<long int> vec = busca_hash(hash_path, chave);
+
+            if (vec.empty())
+                return false;
+
+            tablefile.seekg(vec.front());
+            getline(tablefile, line);
+            cout << "A: " + line << endl;
+
+            return true;
         }
     }
 
@@ -487,7 +540,8 @@ bool deep_search(const Table &table, string search, vector<Register> &listaRegis
 
     Field campo(nomeCampo);
 
-    int pos = table.getPosField(nomeCampo,campo);
+    // int pos = table.getPosField(nomeCampo,campo);
+    int pos = 0;
 
     if(pos < 0){
         cout << "Campo não encontrado" << endl;
@@ -499,21 +553,44 @@ bool deep_search(const Table &table, string search, vector<Register> &listaRegis
         return false;
     }
 
-    string read_data = readfile(table.getNameFile());
-    string* data = split(read_data, '\n');
+    if (!field_hash_exists(table, nomeCampo)) {
+        string read_data = readfile(table.getNameFile());
+        string* data = split(read_data, '\n');
 
-    for(int i = 0; i < get_delimiters(read_data, '\n'); i++){
+        for(int i = 0; i < get_delimiters(read_data, '\n'); i++){
 
-        if(split(data[i], '\t', pos) == valorCampo){
+            if(split(data[i], '\t', pos) == valorCampo){
 
-            Information info(i);
-            Register registro(table);
-            registro.addSearch(info);
+                Information info(i);
+                Register registro(table);
+                registro.addSearch(info);
 
-            if(!existeOcorrenciaDeleted(table, info, listaRegistros)){
-                concatenaInformacoesSearch(registro, listaRegistros);
-                cout  << data[i] << endl;
+                if(!existeOcorrenciaDeleted(table, info, listaRegistros)){
+                    concatenaInformacoesSearch(registro, listaRegistros);
+                    cout  << data[i] << endl;
+                    found = true;
+                }
+            }
+        }
+    }
+    else {
+        ifstream tablefile("Table_" + table.getNameTable() + ".txt");
+
+        if (tablefile.is_open()) {
+            string line;
+            int chave = stoi(valorCampo);
+            string hash_path("INDEX_" + nomeCampo + "_" + table.getNameTable() + ".txt");
+            vector<long int> vec = busca_hash(hash_path, chave);
+
+            if (vec.empty())
+                found = false;
+            else
                 found = true;
+
+            for (vector<long int>::iterator it = vec.begin(); it != vec.end(); it++) {
+                tablefile.seekg(*it);
+                getline(tablefile, line);
+                cout << "A: " + line << endl;
             }
         }
     }
@@ -595,7 +672,7 @@ bool create_index(string type, string table, string field){
         // Checks line by line
         for(int i=0;i<get_delimiters(metadata, '\n'); i++){
             extracted = split(metadata, '\n', i);
-            extracted_name = split(split(metadata, '\n', i), '\t', 0);
+            extracted_name = split(extracted, '\t', 0);
             if(toUpper(extracted_name) == table){
                 for(int j=1;j<get_delimiters(extracted, '\t');j++){
                     if(field == toUpper(split(split(extracted, '\t', j), ':', 1))){
@@ -631,7 +708,11 @@ bool create_index(string type, string table, string field){
         if(accumulator[accumulator.length()-1] == '\n')
             accumulator = get_substring(accumulator, 0, accumulator.length()-2);
 
-        metafile << accumulator << "\n" << new_entry;
+        if (accumulator != "")
+            metafile << accumulator << "\n" << new_entry;
+        else
+            metafile << new_entry;
+
         metafile.close();
 
         // Cria índice hash
@@ -673,6 +754,7 @@ bool create_index(string type, string table, string field){
                 
                 for (int i = 0; i < reg_count; i++) {
                     p.cont = tablefile.tellg();
+                    // p.cont = i;
                     getline(tablefile, line);
 
                     // Gambiarra para pegar o field_pos ésimo elemento. Ainda 
@@ -773,8 +855,8 @@ class interpreter {
 
 public:
     interpreter(){
-        loadListTable(listaTabelas);
-        loadLists(listaTabelas, listaRegistros);
+        loadListTable(this->listaTabelas);
+        loadLists(this->listaTabelas, this->listaRegistros);
     }
 
     vector<Register> listaRegistros;

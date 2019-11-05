@@ -19,7 +19,6 @@ int main(int args, char** argv){
     // Modo Texto
     if(argv[1] == NULL){
         while(input != "EB" && getline(std::cin, input)){
-
             toUpperString(input);
 
             if(input.empty()){

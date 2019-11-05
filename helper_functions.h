@@ -47,7 +47,7 @@ string readfile(string filename){
     string data, line;
     infile.open(filename);
 
-    for(line; getline(infile, line); ) {
+    for(; getline(infile, line);) {
         data += line + "\n";
     }
 
